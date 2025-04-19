@@ -1,13 +1,23 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function AdsPage() {
   return (
     <div className="container py-12">
       <div className="max-w-3xl mx-auto space-y-8">
         <div className="space-y-2">
-          <h1 className="text-4xl font-bold tracking-tighter">Advertising Options</h1>
-          <p className="text-muted-foreground">Learn about our non-intrusive advertising options for Share & Pray.</p>
+          <h1 className="text-4xl font-bold tracking-tighter">
+            Advertising Options
+          </h1>
+          <p className="text-muted-foreground">
+            Learn about our non-intrusive advertising options for Charis.
+          </p>
         </div>
 
         <Tabs defaultValue="overview">
@@ -19,8 +29,9 @@ export default function AdsPage() {
 
           <TabsContent value="overview" className="space-y-6 pt-6">
             <p>
-              Share & Pray offers thoughtful, non-intrusive advertising opportunities that respect our users' prayer
-              experience while providing value to advertisers and supporting our platform.
+              Charis offers thoughtful, non-intrusive advertising opportunities
+              that respect our users' prayer experience while providing value to
+              advertisers and supporting our platform.
             </p>
 
             <div className="grid gap-6 md:grid-cols-2">
@@ -30,8 +41,9 @@ export default function AdsPage() {
                 </CardHeader>
                 <CardContent>
                   <p>
-                    We believe advertising can be respectful and relevant. Our ads are carefully placed to minimize
-                    disruption while maximizing visibility for advertisers who share our values.
+                    We believe advertising can be respectful and relevant. Our
+                    ads are carefully placed to minimize disruption while
+                    maximizing visibility for advertisers who share our values.
                   </p>
                 </CardContent>
               </Card>
@@ -42,8 +54,9 @@ export default function AdsPage() {
                 </CardHeader>
                 <CardContent>
                   <p>
-                    Reach a community of faith-minded individuals who are actively engaged in prayer and spiritual
-                    growth. Our platform offers unique demographic targeting opportunities.
+                    Reach a community of faith-minded individuals who are
+                    actively engaged in prayer and spiritual growth. Our
+                    platform offers unique demographic targeting opportunities.
                   </p>
                 </CardContent>
               </Card>
@@ -52,7 +65,10 @@ export default function AdsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Google AdSense Integration</CardTitle>
-                <CardDescription>We use Google AdSense to deliver relevant, content-appropriate ads.</CardDescription>
+                <CardDescription>
+                  We use Google AdSense to deliver relevant, content-appropriate
+                  ads.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p>Google AdSense allows us to show ads that are:</p>
@@ -63,15 +79,19 @@ export default function AdsPage() {
                   <li>Responsive across all devices</li>
                 </ul>
                 <p>
-                  We've carefully configured our AdSense implementation to ensure ads complement rather than detract
-                  from the prayer experience.
+                  We've carefully configured our AdSense implementation to
+                  ensure ads complement rather than detract from the prayer
+                  experience.
                 </p>
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="formats" className="space-y-6 pt-6">
-            <p>We offer several ad formats designed to be effective while respecting the user experience.</p>
+            <p>
+              We offer several ad formats designed to be effective while
+              respecting the user experience.
+            </p>
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -83,8 +103,9 @@ export default function AdsPage() {
                     Banner Ad Example (728×90)
                   </div>
                   <p>
-                    Placed at the bottom of the screen or between content sections, our banner ads provide visibility
-                    without interrupting the prayer experience.
+                    Placed at the bottom of the screen or between content
+                    sections, our banner ads provide visibility without
+                    interrupting the prayer experience.
                   </p>
                 </CardContent>
               </Card>
@@ -98,8 +119,8 @@ export default function AdsPage() {
                     Sidebar Ad Example (160×600)
                   </div>
                   <p>
-                    Displayed in the sidebar on desktop views, these ads provide excellent visibility while users browse
-                    prayer requests.
+                    Displayed in the sidebar on desktop views, these ads provide
+                    excellent visibility while users browse prayer requests.
                   </p>
                 </CardContent>
               </Card>
@@ -111,15 +132,21 @@ export default function AdsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="p-4 bg-muted rounded-md border">
-                  <div className="text-xs text-muted-foreground mb-2">Sponsored</div>
-                  <h3 className="text-sm font-medium mb-1">Faith-Based Resources for Your Journey</h3>
+                  <div className="text-xs text-muted-foreground mb-2">
+                    Sponsored
+                  </div>
+                  <h3 className="text-sm font-medium mb-1">
+                    Faith-Based Resources for Your Journey
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    Discover books, courses, and tools to deepen your prayer life and spiritual growth.
+                    Discover books, courses, and tools to deepen your prayer
+                    life and spiritual growth.
                   </p>
                 </div>
                 <p>
-                  Native ads blend seamlessly with the platform's content, providing value to users while promoting
-                  relevant products or services. These are clearly marked as sponsored content.
+                  Native ads blend seamlessly with the platform's content,
+                  providing value to users while promoting relevant products or
+                  services. These are clearly marked as sponsored content.
                 </p>
               </CardContent>
             </Card>
@@ -130,17 +157,24 @@ export default function AdsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p>
-                  Shown at natural transition points (such as after marking a prayer as complete), these full-screen ads
-                  appear infrequently and include a prominent close button.
+                  Shown at natural transition points (such as after marking a
+                  prayer as complete), these full-screen ads appear infrequently
+                  and include a prominent close button.
                 </p>
                 <div className="p-6 bg-muted rounded-md border flex flex-col items-center justify-center gap-4">
                   <div className="text-center">
-                    <div className="text-xs text-muted-foreground mb-2">Advertisement</div>
+                    <div className="text-xs text-muted-foreground mb-2">
+                      Advertisement
+                    </div>
                     <h3 className="text-lg font-medium mb-1">Special Offer</h3>
-                    <p className="text-sm text-muted-foreground">Faith-based content relevant to our community</p>
+                    <p className="text-sm text-muted-foreground">
+                      Faith-based content relevant to our community
+                    </p>
                   </div>
                   <div className="flex justify-end w-full">
-                    <div className="text-xs border rounded-full px-2 py-1">Close ×</div>
+                    <div className="text-xs border rounded-full px-2 py-1">
+                      Close ×
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -148,7 +182,10 @@ export default function AdsPage() {
           </TabsContent>
 
           <TabsContent value="guidelines" className="space-y-6 pt-6">
-            <p>We maintain strict guidelines to ensure all advertisements align with our community values.</p>
+            <p>
+              We maintain strict guidelines to ensure all advertisements align
+              with our community values.
+            </p>
 
             <Card>
               <CardHeader>
@@ -172,12 +209,23 @@ export default function AdsPage() {
               </CardHeader>
               <CardContent>
                 <ul className="list-disc pl-6 space-y-2">
-                  <li>Ads must not interfere with the core prayer experience</li>
+                  <li>
+                    Ads must not interfere with the core prayer experience
+                  </li>
                   <li>Ad frequency is limited to prevent fatigue</li>
-                  <li>All ads must be clearly distinguishable from platform content</li>
-                  <li>Ads must be responsive and perform well on all devices</li>
-                  <li>Sound is disabled by default on all video advertisements</li>
-                  <li>Users can report inappropriate ads for immediate review</li>
+                  <li>
+                    All ads must be clearly distinguishable from platform
+                    content
+                  </li>
+                  <li>
+                    Ads must be responsive and perform well on all devices
+                  </li>
+                  <li>
+                    Sound is disabled by default on all video advertisements
+                  </li>
+                  <li>
+                    Users can report inappropriate ads for immediate review
+                  </li>
                 </ul>
               </CardContent>
             </Card>
@@ -188,7 +236,8 @@ export default function AdsPage() {
               </CardHeader>
               <CardContent>
                 <p className="mb-4">
-                  We welcome partnerships with organizations that align with our mission and values:
+                  We welcome partnerships with organizations that align with our
+                  mission and values:
                 </p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>Faith-based organizations and ministries</li>
@@ -204,6 +253,5 @@ export default function AdsPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
-

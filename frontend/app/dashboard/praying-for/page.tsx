@@ -1,183 +1,138 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, MoreHorizontal, PlusCircle, Heart } from "lucide-react";
+import { BookOpen, Heart, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { prayers } from "@/lib/data";
-import type { Prayer } from "@/lib/types";
-import { Separator } from "@/components/ui/separator";
+import VerifiedClerkSession from "@/components/verified-clerk-session";
+import {
+  getPrayerResponsesByUser,
+  updatePrayerResponse,
+} from "@/services/prayers";
+import { useAuth } from "@clerk/nextjs";
+import { Prayer } from "@/services/types";
+import { PrayerWillPrayCard } from "@/components/prayer-will-pray-card";
+import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
 
 export default function PrayingForPage() {
-  const [prayingFor, setPrayingFor] = useState<Prayer[]>(prayers.slice(3, 6));
+  const [prayingFor, setPrayingFor] = useState<Prayer[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const { getToken } = useAuth();
 
-  const handleMarkAsPrayed = (id: string) => {
-    setPrayingFor(prayingFor.filter((p) => p.id !== id));
-    toast.success("Marked as prayed", {
-      description: "Thank you for your prayers. The user has been notified.",
-    });
+  useEffect(() => {
+    const loadPrayers = async () => {
+      const token = await getToken();
+      try {
+        setIsLoading(true);
+        const response = await getPrayerResponsesByUser(token);
+        setPrayingFor(response.data);
+      } catch (error) {
+        console.error("Failed to load prayer responses:", error);
+        toast.error("Failed to load your prayer commitments");
+      }
+      setIsLoading(false);
+    };
+    loadPrayers();
+  }, [getToken]);
+
+  const handlePrayerRequestAction = async (
+    prayerId: string,
+    status: string
+  ) => {
+    const token = await getToken();
+    try {
+      await updatePrayerResponse(prayerId, status, token);
+      setPrayingFor((prev) => prev.filter((p) => p.id !== prayerId));
+      if (status === "prayed_for") {
+        toast.success("Marked as prayed", {
+          description: "Thank you for your prayers.",
+        });
+      } else if (status === "not_now") {
+        toast.success("Uncommitted to prayer", {
+          description: "Removed prayer from your commited prayers.",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to mark prayer as 'prayed for'.:", error);
+      toast.error("Failed to mark prayer as 'prayed for'.:");
+    }
   };
 
-  const container = {
+  const containerVariants = {
     hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+    show: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
 
   return (
-    <div className="space-y-6">
-      <motion.h2
-        className="text-xl font-semibold"
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        Prayers I'm Committed To
-      </motion.h2>
+    <VerifiedClerkSession>
+      <div className="space-y-6">
+        <motion.h2
+          className="text-xl font-semibold"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          Prayers I'm Committed To
+        </motion.h2>
 
-      {prayingFor.length > 0 ? (
-        <motion.div
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          <AnimatePresence>
-            {prayingFor.map((prayer) => (
-              <motion.div
-                key={prayer.id}
-                variants={item}
-                exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
-                layout
-                whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              >
-                <Card className="h-full border-primary/20 bg-card/80 backdrop-blur-sm overflow-hidden p-0">
-                  <CardHeader className="pt-4 bg-gradient-to-b from-primary/5 to-transparent">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-lg">
-                          {prayer.title || "Untitled Prayer"}
-                        </CardTitle>
-                        <CardDescription>
-                          From {prayer.user.name} • {prayer.timeAgo}
-                        </CardDescription>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="cursor-pointer"
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Options</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            className="cursor-pointer"
-                            onClick={() => handleMarkAsPrayed(prayer.id)}
-                          >
-                            <Check className="mr-2 h-4 w-4" />
-                            Mark as Prayed
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pr-8">
-                    <p className="line-clamp-3 text-sm">{prayer.content}</p>
-                    {prayer.category && (
-                      <Badge
-                        variant="outline"
-                        className="mt-3 border-primary/30 bg-primary/5"
-                      >
-                        {prayer.category}
-                      </Badge>
-                    )}
-                  </CardContent>
-                  <Separator />
-                  <CardFooter className="flex justify-between pb-5">
-                    <div className="text-sm text-muted-foreground">
-                      {prayer.prayerCount} people praying
-                    </div>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => handleMarkAsPrayed(prayer.id)}
-                      >
-                        <Check className="h-4 w-4" />
-                        Mark as Prayed
-                      </Button>
-                    </motion.div>
-                  </CardFooter>
-                </Card>
-              </motion.div>
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* Render 3 skeleton cards while loading */}
+            {[...Array(3)].map((_, i) => (
+              <PrayerCardSkeleton key={i} showButtonActions={false} />
             ))}
-          </AnimatePresence>
-        </motion.div>
-      ) : (
-        <motion.div
-          className="text-center p-12 border rounded-lg border-primary/20 bg-card/50 backdrop-blur-sm"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+          </div>
+        ) : prayingFor.length > 0 ? (
           <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
           >
-            <Heart className="h-8 w-8 text-primary" />
+            <AnimatePresence>
+              {prayingFor.map((prayer) => (
+                <PrayerWillPrayCard
+                  key={prayer.id}
+                  prayer={prayer}
+                  handlePrayerRequestAction={handlePrayerRequestAction}
+                />
+              ))}
+            </AnimatePresence>
           </motion.div>
-          <h3 className="text-xl font-medium mb-2">
-            Not praying for anyone yet
-          </h3>
-          <p className="text-muted-foreground mb-4">
-            When you commit to pray for someone, they'll appear here.
-          </p>
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button asChild>
-              <Link href="/prayers">
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Discover Prayer Requests
-              </Link>
-            </Button>
+        ) : (
+          <motion.div
+            className="text-center p-12 border rounded-lg border-primary/20 bg-card/50 backdrop-blur-sm"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="mx-auto mb-4 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center"
+            >
+              <Heart className="h-8 w-8 text-primary" />
+            </motion.div>
+            <h3 className="text-xl font-medium mb-2">
+              Not praying for anyone yet
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              When you commit to pray for someone, they'll appear here.
+            </p>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button asChild>
+                <Link href="/prayers">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Discover Prayer Requests
+                </Link>
+              </Button>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </div>
+        )}
+      </div>
+    </VerifiedClerkSession>
   );
 }

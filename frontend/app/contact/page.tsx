@@ -157,9 +157,7 @@ export default function ContactPage() {
               </svg>
             </div>
             <h3 className="text-lg font-medium">Email</h3>
-            <p className="text-sm text-muted-foreground">
-              contact@shareandpray.com
-            </p>
+            <p className="text-sm text-muted-foreground">contact@charis.com</p>
           </div>
           <div className="space-y-2">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">

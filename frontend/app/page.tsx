@@ -1,12 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowRight, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import PrayerCard from "@/components/prayer-card";
-import { prayers } from "@/lib/data";
+import PreviewPrayerCard from "@/components/preview-prayer-card";
+import DonationBanner from "@/components/donation-banner";
+import CustomLink from "@/components/custom-link";
 
 export default function Home() {
   const container = {
@@ -31,6 +31,8 @@ export default function Home() {
       },
     },
   };
+
+  const isComingSoon = process.env.FEATURE_COMING_SOON === "true";
 
   return (
     <div className="container flex flex-col items-center justify-center min-h-screen py-12 space-y-16">
@@ -77,7 +79,6 @@ export default function Home() {
             </svg>
           </motion.div>
         </motion.div>
-
         <motion.h1
           className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl"
           initial={{ opacity: 0 }}
@@ -108,7 +109,7 @@ export default function Home() {
             size="lg"
             className="bg-primary hover:bg-primary/90 relative overflow-hidden group"
           >
-            <Link href="/prayers">
+            <CustomLink isComingSoon={isComingSoon} href="/prayers">
               <span className="relative z-10 flex items-center">
                 Start Praying
                 <motion.span
@@ -124,7 +125,7 @@ export default function Home() {
                 </motion.span>
               </span>
               <span className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            </Link>
+            </CustomLink>
           </Button>
 
           <Button
@@ -133,7 +134,7 @@ export default function Home() {
             size="lg"
             className="relative overflow-hidden"
           >
-            <Link href="/submit">
+            <CustomLink isComingSoon={isComingSoon} href="/submit">
               <span className="relative z-10">Submit Prayer</span>
               <motion.span
                 className="absolute inset-0 bg-primary/10"
@@ -141,7 +142,7 @@ export default function Home() {
                 whileHover={{ scale: 1, opacity: 1 }}
                 transition={{ duration: 0.3 }}
               />
-            </Link>
+            </CustomLink>
           </Button>
         </motion.div>
       </motion.div>
@@ -157,7 +158,7 @@ export default function Home() {
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 300, damping: 15 }}
         >
-          <PrayerCard prayer={prayers[0]} previewMode />
+          <PreviewPrayerCard />
         </motion.div>
       </motion.div>
 
@@ -271,6 +272,18 @@ export default function Home() {
           </Card>
         </motion.div>
       </motion.div>
+
+      {/* Donation Banner */}
+      <motion.div
+        className="w-full max-w-5xl"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true, margin: "-50px" }}
+      >
+        <DonationBanner isFixed={false} />
+      </motion.div>
+
       <motion.div
         className="w-full max-w-3xl mx-auto text-center"
         initial={{ opacity: 0, y: 20 }}

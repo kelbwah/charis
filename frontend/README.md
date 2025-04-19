@@ -1,6 +1,12 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Charis Frontend
 
 ## Getting Started
+
+<ol>
+    <li>First, setup and run the go backend.</li>
+    <li>Second, setup and run the go backend.</li>
+    <li>First, setup and run the go backend.</li>
+<ol>
 
 First, run the development server:
 
@@ -17,8 +23,6 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
 

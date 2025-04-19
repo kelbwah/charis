@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation"
+import { redirect } from "next/navigation";
 
 export default function DashboardPage() {
-  redirect("/dashboard/my-prayers")
+  redirect("/dashboard/my-prayers");
 }
-

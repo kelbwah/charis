@@ -1,25 +1,32 @@
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function AboutPage() {
   return (
     <div className="container py-12">
       <div className="max-w-3xl mx-auto space-y-12">
         <div className="space-y-4 text-center">
-          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">About Share & Pray</h1>
-          <p className="text-xl text-muted-foreground">Connecting believers through the power of prayer</p>
+          <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl">
+            About Charis
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            Connecting believers through the power of prayer
+          </p>
         </div>
 
         <div className="space-y-6">
           <h2 className="text-2xl font-semibold">Our Mission</h2>
           <p className="leading-7">
-            Share & Pray was created with a simple but powerful mission: to connect believers around the world through
-            prayer. We believe in the transformative power of prayer and the strength that comes from a community united
-            in faith.
+            Charis was created with a simple but powerful mission: to connect
+            believers around the world through prayer. We believe in the
+            transformative power of prayer and the strength that comes from a
+            community united in faith.
           </p>
           <p className="leading-7">
-            Our platform provides a safe, respectful space where people can share their prayer needs, commit to pray for
-            others, and experience the encouragement that comes from knowing others are praying for them.
+            Our platform provides a safe, respectful space where people can
+            share their prayer needs, commit to pray for others, and experience
+            the encouragement that comes from knowing others are praying for
+            them.
           </p>
         </div>
 
@@ -47,7 +54,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-medium">Share</h3>
               <p className="text-muted-foreground">
-                Submit your prayer requests to the community. Be as specific or general as you feel comfortable.
+                Submit your prayer requests to the community. Be as specific or
+                general as you feel comfortable.
               </p>
             </div>
             <div className="space-y-3">
@@ -71,8 +79,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-medium">Pray</h3>
               <p className="text-muted-foreground">
-                Browse prayer requests and commit to pray for those that touch your heart. Swipe right to pray, left to
-                pass.
+                Browse prayer requests and commit to pray for those that touch
+                your heart. Swipe right to pray, left to pass.
               </p>
             </div>
             <div className="space-y-3">
@@ -95,7 +103,8 @@ export default function AboutPage() {
               </div>
               <h3 className="text-xl font-medium">Connect</h3>
               <p className="text-muted-foreground">
-                Send messages of encouragement to those you're praying for. Build a community of support and faith.
+                Send messages of encouragement to those you're praying for.
+                Build a community of support and faith.
               </p>
             </div>
           </div>
@@ -107,24 +116,29 @@ export default function AboutPage() {
             <div className="space-y-3">
               <h3 className="text-xl font-medium">Respect</h3>
               <p className="text-muted-foreground">
-                We honor all faith traditions and ensure a respectful environment for all users.
+                We honor all faith traditions and ensure a respectful
+                environment for all users.
               </p>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-medium">Privacy</h3>
               <p className="text-muted-foreground">
-                Your personal information is protected, and you control what you share.
+                Your personal information is protected, and you control what you
+                share.
               </p>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-medium">Community</h3>
               <p className="text-muted-foreground">
-                We foster a supportive community where everyone feels welcome and valued.
+                We foster a supportive community where everyone feels welcome
+                and valued.
               </p>
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-medium">Authenticity</h3>
-              <p className="text-muted-foreground">We encourage genuine connections and sincere prayer commitments.</p>
+              <p className="text-muted-foreground">
+                We encourage genuine connections and sincere prayer commitments.
+              </p>
             </div>
           </div>
         </div>
@@ -132,8 +146,8 @@ export default function AboutPage() {
         <div className="space-y-6 text-center">
           <h2 className="text-2xl font-semibold">Join Our Community</h2>
           <p className="leading-7">
-            Whether you're seeking prayer or wanting to pray for others, we invite you to become part of our growing
-            community.
+            Whether you're seeking prayer or wanting to pray for others, we
+            invite you to become part of our growing community.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button asChild size="lg">
@@ -146,6 +160,5 @@ export default function AboutPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-

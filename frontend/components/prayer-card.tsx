@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   motion,
-  type PanInfo,
   useMotionValue,
   useTransform,
+  type PanInfo,
 } from "framer-motion";
-import { Flag, MessageCircle, MoreHorizontal, Send, X } from "lucide-react";
+import { Flag, MoreHorizontal, X, BookOpen, Quote, Check } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,10 +19,10 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -30,71 +30,115 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PrayerCardSkeleton } from "./prayer-card-skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import type { Prayer } from "@/lib/types";
+import type { Prayer, User } from "@/services/types";
+import { getUserById } from "@/services/users";
+import { useAuth } from "@clerk/nextjs";
+import { getPrayerCountById } from "@/services/prayers";
+import { Badge } from "./ui/badge";
 
 interface PrayerCardProps {
   prayer: Prayer;
-  onPray?: (id: string) => void;
-  onSkip?: (id: string) => void;
-  previewMode?: boolean;
+  onPray?: (id: string) => Promise<void>;
+  onSkip?: (id: string) => Promise<void>;
 }
 
 export default function PrayerCard({
   prayer,
   onPray,
   onSkip,
-  previewMode = false,
 }: PrayerCardProps) {
   const [showReport, setShowReport] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [peoplePraying, setPeoplePraying] = useState<number | null>(null);
   const [direction, setDirection] = useState<"left" | "right" | null>(null);
   const [exitX, setExitX] = useState(0);
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
+  // Motion values for drag effects.
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-15, 0, 15]);
   const opacity = useTransform(x, [-200, -150, 0, 150, 200], [0, 1, 1, 1, 0]);
 
+  // Swipe feedback animations
   const prayScale = useTransform(x, [-100, 0, 100, 200], [0.5, 0.5, 1.2, 1.5]);
   const skipScale = useTransform(x, [-200, -100, 0, 100], [1.5, 1.2, 0.5, 0.5]);
   const prayOpacity = useTransform(x, [-100, 0, 100, 200], [0, 0, 0.8, 1]);
   const skipOpacity = useTransform(x, [-200, -100, 0, 100], [1, 0.8, 0, 0]);
 
-  const handleDragEnd = (
-    event: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo,
-  ) => {
-    setIsDragging(false);
+  const { getToken } = useAuth();
 
-    if (previewMode) {
-      x.set(0);
-      return;
+  // Fetch user and prayer count info.
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      if (!prayer) return;
+      const token = await getToken();
+      try {
+        const { data: userData } = await getUserById(prayer.user_id, token);
+        setUser(userData);
+        const { data: prayerCountData } = await getPrayerCountById(
+          prayer.id,
+          token
+        );
+        setPeoplePraying(prayerCountData.WillPrayCount);
+      } catch (error) {
+        console.error("Error fetching user or prayer count", error);
+      }
+      setIsLoading(false);
     }
+    fetchData();
+  }, [prayer, getToken]);
 
+  const timeDisplay = new Date(prayer.created_at).toLocaleString();
+  const displayName = prayer.is_anonymous
+    ? "Anonymous"
+    : user
+    ? user.username
+    : "Loading...";
+  const avatarInitials = prayer.is_anonymous
+    ? "AN"
+    : user
+    ? user.username.slice(0, 2).toUpperCase()
+    : "";
+
+  const handleDragEnd = async (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
     if (info.offset.x > 100) {
-      // Swiped right - pray
       setDirection("right");
       setExitX(200);
       if (onPray) {
-        setTimeout(() => {
-          onPray(prayer.id);
+        setTimeout(async () => {
+          await onPray(prayer.id);
         }, 300);
       }
     } else if (info.offset.x < -100) {
-      // Swiped left - skip
       setDirection("left");
       setExitX(-200);
       if (onSkip) {
-        setTimeout(() => {
-          onSkip(prayer.id);
+        setTimeout(async () => {
+          await onSkip(prayer.id);
         }, 300);
       }
     }
   };
+
+  const formattedCategory = prayer.category
+    ? prayer.category.charAt(0).toUpperCase() + prayer.category.slice(1)
+    : "";
+  const hasScripture =
+    prayer.related_scripture && prayer.related_scripture.trim() !== "";
+
+  if (isLoading) {
+    return <PrayerCardSkeleton showButtonActions={true} />;
+  }
 
   return (
     <>
@@ -104,9 +148,7 @@ export default function PrayerCard({
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           style={{ x, rotate, opacity }}
-          onDragStart={() => setIsDragging(true)}
           onDragEnd={handleDragEnd}
-          whileTap={{ cursor: "grabbing" }}
           animate={direction ? { x: exitX } : undefined}
           transition={direction ? { duration: 0.3 } : undefined}
           className="cursor-grab relative z-10"
@@ -118,22 +160,7 @@ export default function PrayerCard({
               style={{ opacity: prayOpacity }}
             >
               <motion.div style={{ scale: prayScale }}>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="80"
-                  height="80"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-green-500"
-                >
-                  <path d="M17 2.1l4 4-4 4" />
-                  <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4" />
-                  <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
-                </svg>
+                <Check className="h-20 w-20 text-green-500" />
               </motion.div>
             </motion.div>
 
@@ -147,191 +174,185 @@ export default function PrayerCard({
               </motion.div>
             </motion.div>
 
-            <CardHeader className="flex flex-row items-center gap-4 p-4 pb-2 bg-gradient-to-b from-primary/10 to-transparent">
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-              >
-                <Avatar>
+            <CardHeader className="flex flex-row items-center gap-3 p-4 pb-0 bg-gradient-to-b from-primary/10 to-transparent">
+              <Avatar>
+                {!prayer.is_anonymous && user && user.avatar_src ? (
                   <AvatarImage
-                    src={prayer.user.avatar}
-                    alt={prayer.user.name}
+                    src={user.avatar_src || "/placeholder.svg"}
+                    alt={displayName}
                   />
-                  <AvatarFallback>{prayer.user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </motion.div>
+                ) : (
+                  <AvatarFallback>{avatarInitials}</AvatarFallback>
+                )}
+              </Avatar>
               <div className="flex-1">
-                <div className="font-medium">{prayer.user.name}</div>
+                <div className="font-medium">{displayName}</div>
                 <div className="text-xs text-muted-foreground">
-                  {prayer.timeAgo}
+                  {timeDisplay}
                 </div>
               </div>
+              <Badge
+                variant="outline"
+                className="bg-primary/5 border-primary/20 text-xs font-medium"
+              >
+                {formattedCategory}
+              </Badge>
               <DropdownMenu>
-                {!previewMode ? (
-                  <>
-                    <DropdownMenuTrigger
-                      asChild
-                      className="cursor-pointer z-10"
-                    >
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">More options</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        className="cursor-pointer"
-                        onClick={() => setShowReport(true)}
-                      >
-                        <Flag className="mr-2 h-4 w-4" />
-                        Report
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 cursor-pointer z-10"
-                  >
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
                     <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">More options</span>
                   </Button>
-                )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowReport(true)}>
+                    <Flag className="mr-2 h-4 w-4" /> Report
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
               </DropdownMenu>
             </CardHeader>
-            <CardContent className="py-2.5 px-5">
-              <motion.p
-                className="text-lg"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
+
+            {prayer.prayer_title && prayer.prayer_title.trim() !== "" && (
+              <div className="px-5 pt-3 pb-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <BookOpen className="h-4 w-4 text-primary flex-shrink-0" />
+                  <h3 className="text-lg font-semibold tracking-tight text-primary truncate">
+                    {prayer.prayer_title}
+                  </h3>
+                </div>
+              </div>
+            )}
+
+            <CardContent className="py-2 px-5 relative">
+              <div
+                ref={contentRef}
+                className="h-[120px] overflow-y-auto pr-2 relative z-10"
+                style={{
+                  scrollbarWidth: "thin",
+                  scrollbarColor: "rgba(var(--primary), 0.2) transparent",
+                }}
+                onClick={(e) => e.stopPropagation()} // Prevent drag when clicking content
               >
-                {prayer.content}
-              </motion.p>
-              {prayer.category && (
-                <motion.div
-                  className="mt-3"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-muted-foreground leading-relaxed"
                 >
-                  <span className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-0.5 text-xs font-semibold">
-                    {prayer.category}
-                  </span>
-                </motion.div>
-              )}
+                  {prayer.prayer_request}
+                </motion.p>
+              </div>
             </CardContent>
 
-            <CardFooter className="flex justify-between items-center pb-6 pl-4 pr-2.5 border-t border-primary/10">
-              <div className="text-sm text-muted-foreground">
-                {prayer.prayerCount}{" "}
-                {prayer.prayerCount === 1 ? "person" : "people"} praying
+            {hasScripture && (
+              <div className="px-5 pb-2">
+                <div
+                  className="bg-primary/5 rounded-md p-3 border border-primary/10 max-h-[80px] overflow-y-auto"
+                  style={{
+                    scrollbarWidth: "thin",
+                    scrollbarColor: "rgba(var(--primary), 0.2) transparent",
+                  }}
+                  onClick={(e) => e.stopPropagation()} // Prevent drag when clicking scripture
+                >
+                  <div className="flex items-start gap-2">
+                    <Quote className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-sm italic text-foreground">
+                      {prayer.related_scripture}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowMessage(true)}
-                className="relative overflow-hidden group h-8"
-              >
-                <motion.span
-                  className="absolute inset-0 bg-primary/10 rounded-md"
-                  initial={{ scale: 0, opacity: 0 }}
-                  whileHover={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-                <span className="relative z-10 flex items-center">
-                  <MessageCircle className="mr-1 h-4 w-4" />
-                  Send message
+            )}
+            <CardFooter className="flex justify-between text-center items-center pt-4 pb-4.5 px-5 mt-1 border-t border-primary/10 bg-card/50">
+              <div className="flex items-center text-sm text-muted-foreground">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-primary mr-1.5"
+                >
+                  <path d="M17 2.1l4 4-4 4" />
+                  <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8" />
+                  <path d="M7 21.9l-4-4 4-4" />
+                  <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
+                </svg>
+                <span>
+                  {peoplePraying} {peoplePraying === 1 ? "person" : "people"}{" "}
+                  praying
                 </span>
-              </Button>
+              </div>
+              <div className="text-xs text-muted-foreground flex items-center">
+                <span className="text-destructive font-bold">
+                  Swipe left to skip
+                </span>
+                <span className="mx-2">|</span>
+                <span className="text-primary font-bold">
+                  Swipe right to pray
+                </span>
+              </div>
             </CardFooter>
           </Card>
         </motion.div>
 
-        {!isDragging && !direction && (
-          <motion.div
-            className="flex justify-center gap-4 mt-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
+        <div className="flex justify-center gap-4 mt-6">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-12 w-12 rounded-full border-2 border-destructive text-destructive"
+            onClick={() => {
+              setDirection("left");
+              setExitX(-200);
+              if (onSkip) {
+                setTimeout(async () => {
+                  await onSkip(prayer.id);
+                }, 300);
+              }
+            }}
           >
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <Button
-                variant="outline"
-                size="icon"
-                className="cursor-pointer h-12 w-12 rounded-full border-2 border-destructive text-destructive"
-                onClick={() => {
-                  if (previewMode) {
-                    return;
-                  }
-                  setDirection("left");
-                  setExitX(-200);
-                  if (onSkip) {
-                    setTimeout(() => {
-                      onSkip(prayer.id);
-                    }, 300);
-                  }
-                }}
+            <X className="h-6 w-6" />
+            <span className="sr-only">Skip</span>
+          </Button>
+          <Button
+            size="icon"
+            className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 relative overflow-hidden"
+            onClick={() => {
+              setDirection("right");
+              setExitX(200);
+              if (onPray) {
+                setTimeout(async () => {
+                  await onPray(prayer.id);
+                }, 300);
+              }
+            }}
+          >
+            <span className="relative z-10">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-6 w-6"
               >
-                <X className="h-6 w-6" />
-                <span className="sr-only">Skip</span>
-              </Button>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              transition={{ type: "spring", stiffness: 400, damping: 17 }}
-            >
-              <Button
-                size="icon"
-                className="cursor-pointer h-12 w-12 rounded-full bg-primary hover:bg-primary/90 relative overflow-hidden"
-                onClick={() => {
-                  if (previewMode) {
-                    return;
-                  }
-                  setDirection("right");
-                  setExitX(200);
-                  if (onPray) {
-                    setTimeout(() => {
-                      onPray(prayer.id);
-                    }, 300);
-                  }
-                }}
-              >
-                <motion.span
-                  className="absolute inset-0 bg-gradient-to-r from-primary to-primary/80"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "0%" }}
-                  transition={{ duration: 0.4 }}
-                />
-                <span className="relative z-10">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="h-6 w-6"
-                  >
-                    <path d="M17 2.1l4 4-4 4" />
-                    <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4" />
-                    <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
-                  </svg>
-                </span>
-                <span className="sr-only">Pray</span>
-              </Button>
-            </motion.div>
-          </motion.div>
-        )}
+                <path d="M17 2.1l4 4-4 4" />
+                <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8" />
+                <path d="M7 21.9l-4-4 4-4" />
+                <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
+              </svg>
+            </span>
+            <span className="sr-only">Pray</span>
+          </Button>
+        </div>
       </div>
 
       <Dialog open={showReport} onOpenChange={setShowReport}>
@@ -361,39 +382,6 @@ export default function PrayerCard({
               }}
             >
               Submit Report
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={showMessage} onOpenChange={setShowMessage}>
-        <DialogContent className="bg-card border-primary/20">
-          <DialogHeader>
-            <DialogTitle>Send message</DialogTitle>
-            <DialogDescription>
-              Send a message of encouragement to {prayer.user.name}.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <Textarea
-              placeholder="Write your message of encouragement..."
-              className="border-primary/20"
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMessage(false)}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                setShowMessage(false);
-                toast.success("Message sent", {
-                  description: `Your encouragement has been sent to ${prayer.user.name}.`,
-                });
-              }}
-            >
-              <Send className="mr-2 h-4 w-4" />
-              Send
             </Button>
           </DialogFooter>
         </DialogContent>
