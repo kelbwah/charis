@@ -98,7 +98,7 @@ export default function DiscoverPage() {
       setIsLoading(true);
       try {
         const queryString = buildQueryString(cursorRef.current);
-        const response = await getAllPrayers(queryString, token);
+        const response = await getAllPrayers(queryString);
         const data: Prayer[] = response.data;
         if (!append) {
           setActivePrayers(data);
@@ -142,7 +142,7 @@ export default function DiscoverPage() {
 
     const token = await getToken();
     try {
-      await createPrayerResponse(id, action, token);
+      await createPrayerResponse(id, action);
       toast.success(
         action === "will_pray" ? "Added to prayer list" : "Skipped prayer",
         {

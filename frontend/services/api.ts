@@ -8,9 +8,11 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-export const clerkTokenHeaders = (token: string | undefined | null) => {
+const serviceToken = process.env.SERVICE_API_TOKEN;
+
+export const serviceTokenHeader = () => {
   return {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: { Authorization: `Bearer ${serviceToken}` },
   };
 };
 

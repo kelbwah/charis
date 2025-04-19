@@ -57,7 +57,7 @@ export function PrayerWillPrayCard({
       const token = await getToken();
       setLoading(true);
       try {
-        const prayerCountResponse = await getPrayerCountById(prayer.id, token);
+        const prayerCountResponse = await getPrayerCountById(prayer.id);
         setPeoplePraying(prayerCountResponse.data.WillPrayCount);
       } catch (error) {
         console.error("Failed to fetch prayer count", error);
@@ -74,14 +74,14 @@ export function PrayerWillPrayCard({
       }
       const token = await getToken();
       try {
-        let userResponse = await getUserById(prayer.user_id, token);
+        let userResponse = await getUserById(prayer.user_id);
         if (!prayer.is_anonymous) {
           setDisplayName(userResponse.data.username);
         } else {
           setDisplayName("Anonymous");
         }
 
-        let prayerCountResponse = await getPrayerCountById(prayer.id, token);
+        let prayerCountResponse = await getPrayerCountById(prayer.id);
         setPeoplePraying(prayerCountResponse.data.WillPrayCount);
       } catch (error) {
         console.error("Failed to fetch user associated with prayer", error);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
+import { getAuth } from "@clerk/nextjs/server";
 
 const backendApi = axios.create({
   baseURL: process.env.BACKEND_API_URL,
@@ -11,6 +12,9 @@ export async function GET(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const id = context.params.id;
   try {
     const authHeader = request.headers.get("Authorization");
@@ -31,6 +35,9 @@ export async function POST(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const id = context.params.id;
@@ -54,6 +61,9 @@ export async function PUT(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const id = context.params.id;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
@@ -77,6 +87,9 @@ export async function DELETE(
   request: NextRequest,
   context: { params: { id: string } }
 ) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const id = context.params.id;
   try {
     const authHeader = request.headers.get("Authorization");

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import type { Prayer } from "@/services/types";
 import { normalizePrayer } from "@/services/api";
+import { getAuth } from "@clerk/nextjs/server";
 
 const backendApi = axios.create({
   baseURL: process.env.BACKEND_API_URL, // e.g. "https://localhost:6969/api/v1"
@@ -9,8 +10,10 @@ const backendApi = axios.create({
 });
 
 // GET /api/prayers -> forwards to https://localhost:6969/api/v1/prayers
-
 export async function GET(request: NextRequest) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const { searchParams } = new URL(request.url);
   const authHeader = request.headers.get("Authorization");
 
@@ -41,6 +44,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/prayers -> forwards to https://localhost:6969/api/v1/prayers
 export async function POST(request: NextRequest) {
+  const { userId } = getAuth(request);
+  if (!userId) return new NextResponse("Unauthorized", { status: 401 });
+
   const authHeader = request.headers.get("Authorization");
   try {
     const body = await request.json();

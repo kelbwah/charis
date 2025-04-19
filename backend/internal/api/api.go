@@ -36,7 +36,7 @@ func NewServer(appConfig *config.AppConfig) *echo.Echo {
 
 	/* ----- Authenticated Routes ----- */
 	api := e.Group(apiVersion)
-	api.Use(charisware.JWTMiddleware)
+	api.Use(charisware.ServiceAuth)
 	InitUserRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)
 	InitPrayerRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)
 	InitPrayerResponsesRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)

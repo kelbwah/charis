@@ -1,21 +1,16 @@
-import api from './api';
-import { User } from './types';
-import { AxiosResponse } from 'axios';
-import { clerkTokenHeaders } from './api';
+import api from "./api";
+import { User } from "./types";
+import { AxiosResponse } from "axios";
+import { serviceTokenHeader } from "./api";
 
-
-export const getUserById = (
-  id: string,
-  token: string | null
-): Promise<AxiosResponse<User>> => {
-  return api.get<User>(`/users/${id}`, clerkTokenHeaders(token));
+export const getUserById = (id: string): Promise<AxiosResponse<User>> => {
+  return api.get<User>(`/users/${id}`, serviceTokenHeader());
 };
 
 export const getUserByClerkId = (
-  clerkId: string,
-  token?: string
+  clerkId: string
 ): Promise<AxiosResponse<User>> => {
-  return api.get<User>(`/users/clerk/${clerkId}`, clerkTokenHeaders(token));
+  return api.get<User>(`/users/clerk/${clerkId}`, serviceTokenHeader());
 };
 
 export const getUserByEmail = (email: string): Promise<AxiosResponse<User>> => {
@@ -23,17 +18,24 @@ export const getUserByEmail = (email: string): Promise<AxiosResponse<User>> => {
 };
 
 export const getUsers = (): Promise<AxiosResponse<User[]>> => {
-  return api.get<User[]>('/users');
+  return api.get<User[]>("/users");
 };
 
-export const createUser = (userData: Partial<User>): Promise<AxiosResponse<User>> => {
-  return api.post<User>('/users', userData);
+export const createUser = (
+  userData: Partial<User>
+): Promise<AxiosResponse<User>> => {
+  return api.post<User>("/users", userData);
 };
 
-export const updateUser = (id: string, userData: Partial<User>): Promise<AxiosResponse<User>> => {
+export const updateUser = (
+  id: string,
+  userData: Partial<User>
+): Promise<AxiosResponse<User>> => {
   return api.put<User>(`/users/${id}`, userData);
 };
 
-export const deleteUser = (id: string): Promise<AxiosResponse<{ deleted: string }>> => {
+export const deleteUser = (
+  id: string
+): Promise<AxiosResponse<{ deleted: string }>> => {
   return api.delete<{ deleted: string }>(`/users/${id}`);
 };
