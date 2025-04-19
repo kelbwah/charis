@@ -30,19 +30,24 @@ func InitConfig() (*AppConfig, error) {
 	}
 
 	// 1) Raw env vars
-	localPort := os.Getenv("LOCALHOST_PORT")
-	if localPort == "" {
-		localPort = "8080"
+	// Railway sets PORT in prod; fall back to LOCALHOST_PORT for local dev
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = os.Getenv("LOCALHOST_PORT")
+		if port == "" {
+			port = "8080"
+		}
 	}
 	prodEnv := os.Getenv("PROD_ENV") // "true" means production
 	publicURL := os.Getenv("PUBLIC_API_URL")
 
 	// 2) Compute bind address
+	// Compute bindAddr
 	var bindAddr string
 	if prodEnv == "true" {
-		bindAddr = fmt.Sprintf("0.0.0.0:%s", localPort)
+		bindAddr = fmt.Sprintf("0.0.0.0:%s", port)
 	} else {
-		bindAddr = fmt.Sprintf("127.0.0.1:%s", localPort)
+		bindAddr = fmt.Sprintf("127.0.0.1:%s", port)
 	}
 
 	// 3) Default PUBLIC_API_URL if not set
@@ -78,7 +83,6 @@ func InitConfig() (*AppConfig, error) {
 		DB:           db,
 		DBQueries:    queries,
 		RDB:          rdb,
-		LocalPort:    localPort,
 		ProdEnv:      prodEnv,
 		BindAddr:     bindAddr,
 		PublicAPIURL: publicURL,
