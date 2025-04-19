@@ -11,7 +11,6 @@ import {
   getPrayerResponsesByUser,
   updatePrayerResponse,
 } from "@/services/prayers";
-import { useAuth } from "@clerk/nextjs";
 import { Prayer } from "@/services/types";
 import { PrayerWillPrayCard } from "@/components/prayer-will-pray-card";
 import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
@@ -19,14 +18,12 @@ import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
 export default function PrayingForPage() {
   const [prayingFor, setPrayingFor] = useState<Prayer[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { getToken } = useAuth();
 
   useEffect(() => {
     const loadPrayers = async () => {
-      const token = await getToken();
       try {
         setIsLoading(true);
-        const response = await getPrayerResponsesByUser(token);
+        const response = await getPrayerResponsesByUser();
         setPrayingFor(response.data);
       } catch (error) {
         console.error("Failed to load prayer responses:", error);
@@ -35,15 +32,14 @@ export default function PrayingForPage() {
       setIsLoading(false);
     };
     loadPrayers();
-  }, [getToken]);
+  }, []);
 
   const handlePrayerRequestAction = async (
     prayerId: string,
     status: string
   ) => {
-    const token = await getToken();
     try {
-      await updatePrayerResponse(prayerId, status, token);
+      await updatePrayerResponse(prayerId, status);
       setPrayingFor((prev) => prev.filter((p) => p.id !== prayerId));
       if (status === "prayed_for") {
         toast.success("Marked as prayed", {

@@ -15,6 +15,8 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
 
+  const isComingSoon = process.env.FEATURE_COMING_SOON === "true";
+
   return (
     <VerifiedClerkSession>
       <div className="min-h-screen flex flex-col">
@@ -27,7 +29,7 @@ export default function DashboardLayout({
           <div className="container py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" asChild>
-                <CustomLink href="/">
+                <CustomLink isComingSoon={isComingSoon} href="/">
                   <ArrowLeft className="h-5 w-5" />
                   <span className="sr-only">Back to Home</span>
                 </CustomLink>
@@ -43,7 +45,7 @@ export default function DashboardLayout({
               className="hidden md:flex"
               asChild
             >
-              <CustomLink href="/prayers">
+              <CustomLink isComingSoon={isComingSoon} href="/prayers">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Discover Prayers
               </CustomLink>
@@ -52,7 +54,11 @@ export default function DashboardLayout({
 
           <div className="container pb-2">
             <nav className="flex space-x-1">
-              <CustomLink href="/dashboard/my-prayers" passHref>
+              <CustomLink
+                isComingSoon={isComingSoon}
+                href="/dashboard/my-prayers"
+                passHref
+              >
                 <Button
                   variant={
                     pathname === "/dashboard" ||
@@ -74,7 +80,11 @@ export default function DashboardLayout({
                     ))}
                 </Button>
               </CustomLink>
-              <CustomLink href="/dashboard/praying-for" passHref>
+              <CustomLink
+                isComingSoon={isComingSoon}
+                href="/dashboard/praying-for"
+                passHref
+              >
                 <Button
                   variant={
                     pathname === "/dashboard/praying-for" ? "default" : "ghost"

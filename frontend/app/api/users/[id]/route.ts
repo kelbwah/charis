@@ -23,12 +23,12 @@ function normalizeUser(apiUser: any): User {
 // GET /api/users/:id -> forwards to https://localhost:6969/api/v1/users/:id
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-  const id = context.params.id;
+  const id = (await params).id;
   const authHeader = request.headers.get("Authorization");
 
   try {

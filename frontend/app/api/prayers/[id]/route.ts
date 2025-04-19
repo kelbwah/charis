@@ -45,13 +45,13 @@ const backendApi = axios.create({
 // DELETE /api/prayers/:id -> forwards to https://localhost:6969/api/v1/prayers/:id
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
   const authHeader = request.headers.get("Authorization");
-  const id = context.params.id;
+  const id = (await params).id;
   try {
     const response = await backendApi.delete(`/prayers/${id}`, {
       headers: { Authorization: authHeader },

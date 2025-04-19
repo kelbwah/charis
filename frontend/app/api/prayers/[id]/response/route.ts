@@ -10,12 +10,12 @@ const backendApi = axios.create({
 // GET /api/prayers/:id/response -> forwards to https://localhost:6969/api/v1/prayers/:id/response
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-  const id = context.params.id;
+  const id = (await params).id;
   try {
     const authHeader = request.headers.get("Authorization");
     const response = await backendApi.get(`/prayers/${id}/response`, {
@@ -33,14 +33,14 @@ export async function GET(
 // POST /api/prayers/:id/response?status={status} -> forwards to https://localhost:6969/api/v1/prayers/:id/response
 export async function POST(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
-  const id = context.params.id;
+  const id = (await params).id;
   const authHeader = request.headers.get("Authorization");
   try {
     const response = await backendApi.post(`/prayers/${id}/response`, null, {
@@ -59,12 +59,12 @@ export async function POST(
 // PUT /api/prayers/:id/response?status={status} -> forwards to https://localhost:6969/api/v1/prayers/:id/response?status={status}
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-  const id = context.params.id;
+  const id = (await params).id;
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const authHeader = request.headers.get("Authorization");
@@ -85,12 +85,12 @@ export async function PUT(
 // PUT /api/prayers/:id/response -> forwards to https://localhost:6969/api/v1/prayers/:id/response
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-  const id = context.params.id;
+  const id = (await params).id;
   try {
     const authHeader = request.headers.get("Authorization");
     const response = await backendApi.delete(`/prayers/${id}/response`, {

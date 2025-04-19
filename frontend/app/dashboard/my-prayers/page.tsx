@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { deletePrayer, getAllPrayersByUser } from "@/services/prayers";
-import { useAuth } from "@clerk/nextjs";
 import { PrayerRequestCard } from "@/components/prayer-request-card";
 import { Prayer } from "@/services/types";
 import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
@@ -23,14 +22,12 @@ export default function MyPrayersPage() {
     open: false,
     prayer: null,
   });
-  const { getToken } = useAuth();
 
   useEffect(() => {
     const loadMyPrayers = async () => {
-      const token = await getToken();
       try {
         setIsLoading(true);
-        const response = await getAllPrayersByUser(token);
+        const response = await getAllPrayersByUser();
         setMyPrayers(response.data);
       } catch (error) {
         console.error("Failed to fetch your prayers:", error);
@@ -42,9 +39,8 @@ export default function MyPrayersPage() {
   }, [setMyPrayers]);
 
   const handleDelete = async (prayerId: string) => {
-    const token = await getToken();
     try {
-      await deletePrayer(prayerId, token);
+      await deletePrayer(prayerId);
       setMyPrayers(myPrayers.filter((p) => p.id !== prayerId));
       setDeleteDialog({ open: false, prayer: null });
       toast.success("Prayer deleted");

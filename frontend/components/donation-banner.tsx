@@ -17,6 +17,8 @@ export default function DonationBanner({ isFixed }: DonationBannerProps) {
     return null;
   }
 
+  const isComingSoon = process.env.FEATURE_COMING_SOON === "true";
+
   // Small compact banner for fixed position
   if (isFixed) {
     return (
@@ -56,7 +58,7 @@ export default function DonationBanner({ isFixed }: DonationBannerProps) {
                 variant="secondary"
                 className="text-xs h-8"
               >
-                <CustomLink href="/donate">
+                <CustomLink isComingSoon={isComingSoon} href="/donate">
                   <Heart className="mr-1 h-3 w-3" />
                   Support
                 </CustomLink>
@@ -123,7 +125,7 @@ export default function DonationBanner({ isFixed }: DonationBannerProps) {
             transition={{ type: "spring", stiffness: 400, damping: 17 }}
           >
             <Button asChild className="relative overflow-hidden group">
-              <CustomLink href="/donate">
+              <CustomLink isComingSoon={isComingSoon} href="/donate">
                 <span className="relative z-10 flex items-center">
                   <Heart className="mr-2 h-4 w-4" />
                   Support Us

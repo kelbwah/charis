@@ -16,14 +16,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useEffect, useState } from "react";
 import { formatDistance } from "date-fns";
-import type { Prayer, User } from "@/services/types";
-import { useAuth } from "@clerk/nextjs";
+import type { Prayer } from "@/services/types";
 import { getPrayerCountById } from "@/services/prayers";
 import { PrayerCardSkeleton } from "./prayer-card-skeleton";
 import { SendMessageDialog } from "./send-message-dialog";
@@ -41,7 +39,6 @@ export function PrayerWillPrayCard({
   prayer,
   handlePrayerRequestAction,
 }: PrayerWillPrayCardProps) {
-  const { getToken } = useAuth();
   const [loading, setLoading] = useState(true);
   const [displayName, setDisplayName] = useState<string>("");
   const [showMessage, setShowMessage] = useState<boolean>(false);
@@ -54,7 +51,6 @@ export function PrayerWillPrayCard({
 
   useEffect(() => {
     const fetchCount = async () => {
-      const token = await getToken();
       setLoading(true);
       try {
         const prayerCountResponse = await getPrayerCountById(prayer.id);
@@ -72,7 +68,6 @@ export function PrayerWillPrayCard({
         console.warn("Missing user_id in prayer: ", prayer);
         return;
       }
-      const token = await getToken();
       try {
         let userResponse = await getUserById(prayer.user_id);
         if (!prayer.is_anonymous) {

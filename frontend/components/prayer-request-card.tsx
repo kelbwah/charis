@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Prayer } from "@/services/types";
-import { useAuth } from "@clerk/nextjs";
 import { getPrayerCountById } from "@/services/prayers";
 import { useEffect, useState } from "react";
 import { formatDistance } from "date-fns";
@@ -41,7 +40,6 @@ export function PrayerRequestCard({
   setDeleteDialog,
   handleDelete,
 }: PrayerRequestCardProps) {
-  const { getToken } = useAuth();
   const [peoplePraying, setPeoplePraying] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,9 +50,8 @@ export function PrayerRequestCard({
 
   useEffect(() => {
     const fetchCount = async () => {
-      const token = await getToken();
       try {
-        const prayerCountResponse = await getPrayerCountById(prayer.id, token);
+        const prayerCountResponse = await getPrayerCountById(prayer.id);
         setPeoplePraying(prayerCountResponse.data.WillPrayCount);
       } catch (error) {
         console.error("Failed to fetch prayer count", error);

@@ -10,12 +10,12 @@ const backendApi = axios.create({
 // GET /api/prayers/:id/count -> forwards to https://localhost:6969/api/v1/prayers/:id/count
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
-  const id = context.params.id;
+  const id = (await params).id;
   try {
     const authHeader = request.headers.get("Authorization");
     const response = await backendApi.get(`/prayers/${id}/count`, {

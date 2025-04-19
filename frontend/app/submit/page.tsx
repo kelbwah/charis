@@ -25,11 +25,9 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { createPrayer } from "@/services/prayers";
-import { useAuth } from "@clerk/nextjs";
 
 export default function SubmitPrayerPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,21 +50,13 @@ export default function SubmitPrayerPage() {
     setIsSubmitting(true);
 
     try {
-      const token = await getToken();
-      if (token) {
-        await createPrayer(
-          {
-            prayer_title: prayerTitle,
-            prayer_request: prayerRequest,
-            category: category,
-            related_scripture: relatedScripture,
-            is_anonymous: isAnonymous,
-          },
-          token
-        );
-      } else {
-        throw new Error("Unable to retrieve clerk token. Token may be null.");
-      }
+      await createPrayer({
+        prayer_title: prayerTitle,
+        prayer_request: prayerRequest,
+        category: category,
+        related_scripture: relatedScripture,
+        is_anonymous: isAnonymous,
+      });
       toast.success("Prayer request submitted", {
         description: "Your prayer request has been shared with the community.",
       });

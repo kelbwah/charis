@@ -35,7 +35,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Prayer, User } from "@/services/types";
 import { getUserById } from "@/services/users";
-import { useAuth } from "@clerk/nextjs";
 import { getPrayerCountById } from "@/services/prayers";
 import { Badge } from "./ui/badge";
 
@@ -71,21 +70,15 @@ export default function PrayerCard({
   const prayOpacity = useTransform(x, [-100, 0, 100, 200], [0, 0, 0.8, 1]);
   const skipOpacity = useTransform(x, [-200, -100, 0, 100], [1, 0.8, 0, 0]);
 
-  const { getToken } = useAuth();
-
   // Fetch user and prayer count info.
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       if (!prayer) return;
-      const token = await getToken();
       try {
-        const { data: userData } = await getUserById(prayer.user_id, token);
+        const { data: userData } = await getUserById(prayer.user_id);
         setUser(userData);
-        const { data: prayerCountData } = await getPrayerCountById(
-          prayer.id,
-          token
-        );
+        const { data: prayerCountData } = await getPrayerCountById(prayer.id);
         setPeoplePraying(prayerCountData.WillPrayCount);
       } catch (error) {
         console.error("Error fetching user or prayer count", error);
@@ -93,7 +86,7 @@ export default function PrayerCard({
       setIsLoading(false);
     }
     fetchData();
-  }, [prayer, getToken]);
+  }, [prayer]);
 
   const timeDisplay = new Date(prayer.created_at).toLocaleString();
   const displayName = prayer.is_anonymous

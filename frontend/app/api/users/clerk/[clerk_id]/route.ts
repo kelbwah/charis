@@ -10,14 +10,15 @@ const backendApi = axios.create({
 // GET /api/users/clerk/:clerk_id -> forwards to https://localhost:6969/api/v1/users
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clerk_id: string } }
+  { params }: { params: Promise<{ clerk_id: string }> }
 ) {
   const { userId } = getAuth(request);
   if (!userId) return new NextResponse("Unauthorized", { status: 401 });
 
   try {
+    const clerk_id = (await params).clerk_id;
     const authHeader = request.headers.get("Authorization");
-    const response = await backendApi.get(`/users/clerk/${params.clerk_id}`, {
+    const response = await backendApi.get(`/users/clerk/${clerk_id}`, {
       headers: { Authorization: authHeader },
     });
     return NextResponse.json(response.data, { status: response.status });

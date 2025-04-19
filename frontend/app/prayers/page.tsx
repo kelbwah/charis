@@ -26,7 +26,6 @@ import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createPrayerResponse, getAllPrayers } from "@/services/prayers";
 import { Prayer } from "@/services/types";
-import { useAuth } from "@clerk/nextjs";
 import DonationBanner from "@/components/donation-banner";
 
 export default function DiscoverPage() {
@@ -44,12 +43,10 @@ export default function DiscoverPage() {
   const [showAnonymous, setShowAnonymous] = useState(true);
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
-  const [cursor, setCursor] = useState<string>("");
+  const [_, setCursor] = useState<string>("");
   const cursorRef = useRef<string>("");
 
   const [hasMore, setHasMore] = useState<boolean>(true);
-
-  const { getToken } = useAuth();
 
   const allCategories = [
     "Health",
@@ -59,17 +56,6 @@ export default function DiscoverPage() {
     "Work",
     "Relationships",
   ];
-
-  const pulseAnimation = {
-    scale: [1, 1.2, 1],
-    opacity: [0.9, 1, 0.9],
-    transition: {
-      duration: 2.5,
-      ease: "easeInOut",
-      repeat: Number.POSITIVE_INFINITY,
-      repeatType: "reverse" as const,
-    },
-  };
 
   const buildQueryString = (cursorValue: string) => {
     const params = new URLSearchParams();
@@ -94,7 +80,6 @@ export default function DiscoverPage() {
 
   const loadPrayers = useCallback(
     async (append: boolean = false) => {
-      const token = await getToken();
       setIsLoading(true);
       try {
         const queryString = buildQueryString(cursorRef.current);
@@ -118,7 +103,7 @@ export default function DiscoverPage() {
         setIsLoading(false);
       }
     },
-    [selectedCategory, showAnonymous, sortBy, getToken]
+    [selectedCategory, showAnonymous, sortBy]
   );
 
   useEffect(() => {
@@ -126,7 +111,7 @@ export default function DiscoverPage() {
     cursorRef.current = "";
     setHasMore(true);
     loadPrayers(false);
-  }, [selectedCategory, showAnonymous, sortBy, getToken, loadPrayers]);
+  }, [selectedCategory, showAnonymous, sortBy, loadPrayers]);
 
   const loadMorePrayers = async () => {
     if (!hasMore || isLoading) return;
@@ -140,7 +125,6 @@ export default function DiscoverPage() {
       ? setPrayedFor((prev) => [...prev, id])
       : setSkipped((prev) => [...prev, id]);
 
-    const token = await getToken();
     try {
       await createPrayerResponse(id, action);
       toast.success(

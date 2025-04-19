@@ -11,7 +11,6 @@ import {
 import { Textarea } from "./ui/textarea";
 import { Send } from "lucide-react";
 import { useState } from "react";
-import { useAuth } from "@clerk/nextjs";
 import { Switch } from "./ui/switch";
 
 interface SendMessageDialogProps {
@@ -25,20 +24,19 @@ export function SendMessageDialog({
   setShowMessage,
   displayName,
 }: SendMessageDialogProps) {
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const sendMessage = async (message: string) => {
-    const token = useAuth();
-    try {
-    } catch (error) {
-      console.error(error);
-      toast.error(
-        `Error while sending message to ${displayName}. Please try again later.`
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const sendMessage = async (message: string) => {
+  //   try {
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error(
+  //       `Error while sending message to ${displayName}. Please try again later.`
+  //     );
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <Dialog open={showMessage} onOpenChange={setShowMessage}>
