@@ -1,5 +1,7 @@
+"use client";
+
 import { toast } from "sonner";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -7,16 +9,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
-import { Textarea } from "./ui/textarea";
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Send } from "lucide-react";
-import { useState } from "react";
-import { Switch } from "./ui/switch";
+import { Switch } from "@/components/ui/switch";
 
 interface SendMessageDialogProps {
   showMessage: boolean;
   displayName: string;
-  setShowMessage: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowMessage: (value: boolean) => void;
 }
 
 export function SendMessageDialog({
@@ -24,20 +25,6 @@ export function SendMessageDialog({
   setShowMessage,
   displayName,
 }: SendMessageDialogProps) {
-  // const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // const sendMessage = async (message: string) => {
-  //   try {
-  //   } catch (error) {
-  //     console.error(error);
-  //     toast.error(
-  //       `Error while sending message to ${displayName}. Please try again later.`
-  //     );
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
-
   return (
     <Dialog open={showMessage} onOpenChange={setShowMessage}>
       <DialogContent className="bg-card border-primary/20">

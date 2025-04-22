@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 import {
   motion,
   useMotionValue,
@@ -33,10 +33,12 @@ import {
 import { PrayerCardSkeleton } from "./prayer-card-skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import type { Prayer, User } from "@/services/types";
+import type { Prayer } from "@/services/types";
 import { getUserById } from "@/services/users";
 import { getPrayerCountById } from "@/services/prayers";
 import { Badge } from "./ui/badge";
+import { useStore } from "@/store/useStore";
+import { useUIStore } from "@/store/uiStore";
 
 interface PrayerCardProps {
   prayer: Prayer;
@@ -49,12 +51,8 @@ export default function PrayerCard({
   onPray,
   onSkip,
 }: PrayerCardProps) {
-  const [showReport, setShowReport] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [peoplePraying, setPeoplePraying] = useState<number | null>(null);
-  const [direction, setDirection] = useState<"left" | "right" | null>(null);
-  const [exitX, setExitX] = useState(0);
+  const { loading, setLoading } = useUIStore();
+  const { prayerCard, setPrayerCard } = useStore();
 
   const cardRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -73,17 +71,17 @@ export default function PrayerCard({
   // Fetch user and prayer count info.
   useEffect(() => {
     async function fetchData() {
-      setIsLoading(true);
+      setLoading(true);
       if (!prayer) return;
       try {
         const { data: userData } = await getUserById(prayer.user_id);
-        setUser(userData);
+        setPrayerCard({ user: userData });
         const { data: prayerCountData } = await getPrayerCountById(prayer.id);
-        setPeoplePraying(prayerCountData.WillPrayCount);
+        setPrayerCard({ count: prayerCountData.WillPrayCount });
       } catch (error) {
         console.error("Error fetching user or prayer count", error);
       }
-      setIsLoading(false);
+      setLoading(false);
     }
     fetchData();
   }, [prayer]);
@@ -91,13 +89,13 @@ export default function PrayerCard({
   const timeDisplay = new Date(prayer.created_at).toLocaleString();
   const displayName = prayer.is_anonymous
     ? "Anonymous"
-    : user
-    ? user.username
+    : prayerCard.user
+    ? prayerCard.user.username
     : "Loading...";
   const avatarInitials = prayer.is_anonymous
     ? "AN"
-    : user
-    ? user.username.slice(0, 2).toUpperCase()
+    : prayerCard.user
+    ? prayerCard.user.username.slice(0, 2).toUpperCase()
     : "";
 
   const handleDragEnd = async (
@@ -105,16 +103,16 @@ export default function PrayerCard({
     info: PanInfo
   ) => {
     if (info.offset.x > 100) {
-      setDirection("right");
-      setExitX(200);
+      setPrayerCard({ direction: "right" });
+      setPrayerCard({ exitX: 200 });
       if (onPray) {
         setTimeout(async () => {
           await onPray(prayer.id);
         }, 300);
       }
     } else if (info.offset.x < -100) {
-      setDirection("left");
-      setExitX(-200);
+      setPrayerCard({ direction: "left" });
+      setPrayerCard({ exitX: -200 });
       if (onSkip) {
         setTimeout(async () => {
           await onSkip(prayer.id);
@@ -129,7 +127,7 @@ export default function PrayerCard({
   const hasScripture =
     prayer.related_scripture && prayer.related_scripture.trim() !== "";
 
-  if (isLoading) {
+  if (loading) {
     return <PrayerCardSkeleton showButtonActions={true} />;
   }
 
@@ -142,8 +140,8 @@ export default function PrayerCard({
           dragConstraints={{ left: 0, right: 0 }}
           style={{ x, rotate, opacity }}
           onDragEnd={handleDragEnd}
-          animate={direction ? { x: exitX } : undefined}
-          transition={direction ? { duration: 0.3 } : undefined}
+          animate={prayerCard.direction ? { x: prayerCard.exitX } : undefined}
+          transition={prayerCard.direction ? { duration: 0.3 } : undefined}
           className="cursor-grab relative z-10"
         >
           <Card className="w-full max-w-md mx-auto overflow-hidden border-2 shadow-lg relative p-0">
@@ -169,9 +167,11 @@ export default function PrayerCard({
 
             <CardHeader className="flex flex-row items-center gap-3 p-4 pb-0 bg-gradient-to-b from-primary/10 to-transparent">
               <Avatar>
-                {!prayer.is_anonymous && user && user.avatar_src ? (
+                {!prayer.is_anonymous &&
+                prayerCard.user &&
+                prayerCard.user.avatar_src ? (
                   <AvatarImage
-                    src={user.avatar_src || "/placeholder.svg"}
+                    src={prayerCard.user.avatar_src || "/placeholder.svg"}
                     alt={displayName}
                   />
                 ) : (
@@ -198,7 +198,9 @@ export default function PrayerCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setShowReport(true)}>
+                  <DropdownMenuItem
+                    onClick={() => setPrayerCard({ showReport: true })}
+                  >
                     <Flag className="mr-2 h-4 w-4" /> Report
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -276,8 +278,8 @@ export default function PrayerCard({
                   <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2" />
                 </svg>
                 <span>
-                  {peoplePraying} {peoplePraying === 1 ? "person" : "people"}{" "}
-                  praying
+                  {prayerCard.count}{" "}
+                  {prayerCard.count === 1 ? "person" : "people"} praying
                 </span>
               </div>
               <div className="text-xs text-muted-foreground flex items-center">
@@ -299,8 +301,8 @@ export default function PrayerCard({
             size="icon"
             className="h-12 w-12 rounded-full border-2 border-destructive text-destructive"
             onClick={() => {
-              setDirection("left");
-              setExitX(-200);
+              setPrayerCard({ direction: "left" });
+              setPrayerCard({ exitX: -200 });
               if (onSkip) {
                 setTimeout(async () => {
                   await onSkip(prayer.id);
@@ -315,8 +317,8 @@ export default function PrayerCard({
             size="icon"
             className="h-12 w-12 rounded-full bg-primary hover:bg-primary/90 relative overflow-hidden"
             onClick={() => {
-              setDirection("right");
-              setExitX(200);
+              setPrayerCard({ direction: "right" });
+              setPrayerCard({ exitX: 200 });
               if (onPray) {
                 setTimeout(async () => {
                   await onPray(prayer.id);
@@ -348,7 +350,12 @@ export default function PrayerCard({
         </div>
       </div>
 
-      <Dialog open={showReport} onOpenChange={setShowReport}>
+      <Dialog
+        open={prayerCard.showReport}
+        onOpenChange={() =>
+          setPrayerCard({ showReport: !prayerCard.showReport })
+        }
+      >
         <DialogContent className="bg-card border-primary/20">
           <DialogHeader>
             <DialogTitle>Report Prayer Request</DialogTitle>
@@ -363,12 +370,15 @@ export default function PrayerCard({
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReport(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setPrayerCard({ showReport: false })}
+            >
               Cancel
             </Button>
             <Button
               onClick={() => {
-                setShowReport(false);
+                setPrayerCard({ showReport: false });
                 toast.success("Report submitted", {
                   description: "Thank you for helping keep our community safe.",
                 });

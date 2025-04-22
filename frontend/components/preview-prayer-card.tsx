@@ -1,11 +1,21 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from "framer-motion";
 import { Flag, MessageCircle, MoreHorizontal, X, Send } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
+import { useStore } from "@/store/useStore";
 
 export default function PreviewPrayerCard() {
   // Hardcoded mock prayer data.
@@ -35,13 +46,12 @@ export default function PreviewPrayerCard() {
   };
 
   // Hardcoded mock user data.
-  const mockUser = { username: "Samantha", avatarUrl: "/placeholder-avatar.png" };
+  const mockUser = {
+    username: "Samantha",
+    avatarUrl: "/placeholder-avatar.png",
+  };
 
-  const [showReport, setShowReport] = useState(false);
-  const [showMessage, setShowMessage] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [direction, setDirection] = useState<"left" | "right" | null>(null);
-  const [exitX, setExitX] = useState(0);
+  const { previewCard, setPreviewCard } = useStore();
 
   const cardRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
@@ -58,8 +68,11 @@ export default function PreviewPrayerCard() {
     ? "AN"
     : mockUser.username.slice(0, 2).toUpperCase();
 
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    setIsDragging(false);
+  const handleDragEnd = (
+    event: MouseEvent | TouchEvent | PointerEvent,
+    info: PanInfo
+  ) => {
+    setPreviewCard({ dragging: false });
     return;
   };
 
@@ -71,11 +84,11 @@ export default function PreviewPrayerCard() {
           drag="x"
           dragConstraints={{ left: 0, right: 0 }}
           style={{ x, rotate, opacity }}
-          onDragStart={() => setIsDragging(true)}
+          onDragStart={() => setPreviewCard({ dragging: false })}
           onDragEnd={handleDragEnd}
           whileTap={{ cursor: "grabbing" }}
-          animate={direction ? { x: exitX } : undefined}
-          transition={direction ? { duration: 0.3 } : undefined}
+          animate={previewCard.direction ? { x: previewCard.exitX } : undefined}
+          transition={previewCard.direction ? { duration: 0.3 } : undefined}
           className="cursor-grab relative z-10"
         >
           <Card className="w-full max-w-md mx-auto overflow-hidden border-2 shadow-lg relative p-0">
@@ -126,7 +139,9 @@ export default function PreviewPrayerCard() {
               </motion.div>
               <div className="flex-1">
                 <div className="font-medium">{displayName}</div>
-                <div className="text-xs text-muted-foreground">{timeDisplay}</div>
+                <div className="text-xs text-muted-foreground">
+                  {timeDisplay}
+                </div>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild className="cursor-pointer z-10">
@@ -138,7 +153,7 @@ export default function PreviewPrayerCard() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     className="cursor-pointer"
-                    onClick={() => setShowReport(true)}
+                    onClick={() => setPreviewCard({ showReport: true })}
                   >
                     <Flag className="mr-2 h-4 w-4" />
                     Report
@@ -169,11 +184,13 @@ export default function PreviewPrayerCard() {
               )}
             </CardContent>
             <CardFooter className="flex justify-between items-center pb-6 pl-4 pr-2.5 border-t border-primary/10">
-              <div className="text-sm text-muted-foreground">{14} people praying</div>
+              <div className="text-sm text-muted-foreground">
+                {14} people praying
+              </div>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setShowMessage(true)}
+                onClick={() => setPreviewCard({ showMessage: true })}
                 className="relative overflow-hidden group h-8"
               >
                 <motion.span
@@ -246,7 +263,12 @@ export default function PreviewPrayerCard() {
         </motion.div>
       </div>
 
-      <Dialog open={showReport} onOpenChange={setShowReport}>
+      <Dialog
+        open={previewCard.showReport}
+        onOpenChange={() =>
+          setPreviewCard({ showReport: !previewCard.showReport })
+        }
+      >
         <DialogContent className="bg-card border-primary/20">
           <DialogHeader>
             <DialogTitle>Report Prayer Request</DialogTitle>
@@ -261,15 +283,25 @@ export default function PreviewPrayerCard() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowReport(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewCard({ showReport: false })}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setShowReport(false)}>Submit Report</Button>
+            <Button onClick={() => setPreviewCard({ showReport: false })}>
+              Submit Report
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showMessage} onOpenChange={setShowMessage}>
+      <Dialog
+        open={previewCard.showMessage}
+        onOpenChange={() =>
+          setPreviewCard({ showMessage: !previewCard.showMessage })
+        }
+      >
         <DialogContent className="bg-card border-primary/20">
           <DialogHeader>
             <DialogTitle>Send message</DialogTitle>
@@ -284,10 +316,13 @@ export default function PreviewPrayerCard() {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowMessage(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setPreviewCard({ showMessage: false })}
+            >
               Cancel
             </Button>
-            <Button onClick={() => setShowMessage(false)}>
+            <Button onClick={() => setPreviewCard({ showMessage: false })}>
               <Send className="mr-2 h-4 w-4" />
               Send
             </Button>

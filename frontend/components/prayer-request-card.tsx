@@ -18,30 +18,25 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Prayer } from "@/services/types";
 import { getPrayerCountById } from "@/services/prayers";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { formatDistance } from "date-fns";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 import { PrayerCardSkeleton } from "./prayer-card-skeleton";
-
-interface DeleteDialogState {
-  open: boolean;
-  prayer: Prayer | null;
-}
+import { useStore } from "@/store/useStore";
+import { useUIStore } from "@/store/uiStore";
 
 interface PrayerRequestCardProps {
   prayer: Prayer;
-  setDeleteDialog: React.Dispatch<React.SetStateAction<DeleteDialogState>>;
   handleDelete: (prayerId: string) => Promise<void>;
 }
 
 export function PrayerRequestCard({
   prayer,
-  setDeleteDialog,
   handleDelete,
 }: PrayerRequestCardProps) {
-  const [peoplePraying, setPeoplePraying] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { loading, setLoading } = useUIStore();
+  const { setDeleteDialog, requestCard, setRequestCard } = useStore();
 
   const item = {
     hidden: { opacity: 0, y: 20 },
@@ -52,7 +47,7 @@ export function PrayerRequestCard({
     const fetchCount = async () => {
       try {
         const prayerCountResponse = await getPrayerCountById(prayer.id);
-        setPeoplePraying(prayerCountResponse.data.WillPrayCount);
+        setRequestCard({ count: prayerCountResponse.data.WillPrayCount });
       } catch (error) {
         console.error("Failed to fetch prayer count", error);
       }
@@ -130,8 +125,8 @@ export function PrayerRequestCard({
           <Separator />
           <CardFooter className="flex justify-between pb-5">
             <div className="text-sm text-muted-foreground">
-              {peoplePraying} {peoplePraying === 1 ? "person" : "people"}{" "}
-              praying
+              {requestCard.count}{" "}
+              {requestCard.count === 1 ? "person" : "people"} praying
             </div>
             <Button variant="ghost" size="sm" className="gap-1">
               <MessageCircle className="h-4 w-4" />

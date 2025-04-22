@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Filter, SortDesc, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,26 +27,33 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { createPrayerResponse, getAllPrayers } from "@/services/prayers";
 import { Prayer } from "@/services/types";
 import DonationBanner from "@/components/donation-banner";
+import { useStore } from "@/store/useStore";
+import { useUIStore } from "@/store/uiStore";
 
 export default function DiscoverPage() {
-  // Local state declarations.
-  const [activePrayers, setActivePrayers] = useState<Prayer[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [prayedFor, setPrayedFor] = useState<string[]>([]);
-  const [skipped, setSkipped] = useState<string[]>([]);
-  const [isExiting, setIsExiting] = useState(false);
-  const [exitDirection, setExitDirection] = useState<"left" | "right" | null>(
-    null
-  );
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showAnonymous, setShowAnonymous] = useState(true);
-  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const { loading, setLoading } = useUIStore();
+  const {
+    activePrayers,
+    setActivePrayers,
+    currentIndex,
+    setCurrentIndex,
+    setIsExiting,
+    exitDirection,
+    setExitDirection,
+    selectedCategory,
+    setSelectedCategory,
+    showAnonymous,
+    setShowAnonymous,
+    sortBy,
+    setSortBy,
+    setCursor,
+    hasMore,
+    setHasMore,
+    addPrayedFor,
+    addSkipped,
+  } = useStore();
 
-  const [_, setCursor] = useState<string>("");
   const cursorRef = useRef<string>("");
-
-  const [hasMore, setHasMore] = useState<boolean>(true);
 
   const allCategories = [
     "Health",
@@ -80,7 +87,7 @@ export default function DiscoverPage() {
 
   const loadPrayers = useCallback(
     async (append: boolean = false) => {
-      setIsLoading(true);
+      setLoading(true);
       try {
         const queryString = buildQueryString(cursorRef.current);
         const response = await getAllPrayers(queryString);
@@ -89,7 +96,7 @@ export default function DiscoverPage() {
           setActivePrayers(data);
           setCurrentIndex(0);
         } else {
-          setActivePrayers((prev) => [...prev, ...data]);
+          setActivePrayers([...activePrayers, ...data]);
         }
         if (data.length > 0) {
           const newCursor = data[data.length - 1].created_at;
@@ -100,10 +107,20 @@ export default function DiscoverPage() {
       } catch (error: any) {
         toast.error("Failed to load prayers");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     },
-    [selectedCategory, showAnonymous, sortBy]
+    [
+      selectedCategory,
+      showAnonymous,
+      sortBy,
+      activePrayers,
+      setActivePrayers,
+      setCurrentIndex,
+      setCursor,
+      setHasMore,
+      setLoading,
+    ]
   );
 
   useEffect(() => {
@@ -111,19 +128,17 @@ export default function DiscoverPage() {
     cursorRef.current = "";
     setHasMore(true);
     loadPrayers(false);
-  }, [selectedCategory, showAnonymous, sortBy, loadPrayers]);
+  }, [selectedCategory, showAnonymous, sortBy]);
 
   const loadMorePrayers = async () => {
-    if (!hasMore || isLoading) return;
+    if (!hasMore || loading) return;
     await loadPrayers(true);
   };
 
   const handleSwipe = async (id: string, action: "will_pray" | "not_now") => {
     setExitDirection(action === "will_pray" ? "right" : "left");
     setIsExiting(true);
-    action === "will_pray"
-      ? setPrayedFor((prev) => [...prev, id])
-      : setSkipped((prev) => [...prev, id]);
+    action === "will_pray" ? addPrayedFor(id) : addSkipped(id);
 
     try {
       await createPrayerResponse(id, action);
@@ -339,7 +354,7 @@ export default function DiscoverPage() {
         {/* Prayer card display */}
         <div className="flex-1 flex flex-col justify-between items-center px-4 py-8">
           <div className="w-full max-w-md mx-auto">
-            {isLoading ? (
+            {loading ? (
               <PrayerCardSkeleton showButtonActions={true} />
             ) : currentPrayer ? (
               <AnimatePresence mode="wait">

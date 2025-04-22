@@ -10,9 +10,12 @@ const api: AxiosInstance = axios.create({
 
 const serviceToken = process.env.SERVICE_API_TOKEN;
 
-export const serviceTokenHeader = () => {
+export const generateAuthHeaders = (jwtAuthToken: string) => {
   return {
-    headers: { Authorization: `Bearer ${serviceToken}` },
+    headers: {
+      "X-Service-Token": serviceToken,
+      Authorization: `Bearer ${jwtAuthToken}`,
+    },
   };
 };
 

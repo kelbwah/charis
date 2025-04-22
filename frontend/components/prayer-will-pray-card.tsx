@@ -19,13 +19,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { formatDistance } from "date-fns";
 import type { Prayer } from "@/services/types";
 import { getPrayerCountById } from "@/services/prayers";
 import { PrayerCardSkeleton } from "./prayer-card-skeleton";
 import { SendMessageDialog } from "./send-message-dialog";
 import { getUserById } from "@/services/users";
+import { useUIStore } from "@/store/uiStore";
+import { useStore } from "@/store/useStore";
 
 interface PrayerWillPrayCardProps {
   prayer: Prayer;
@@ -39,14 +41,16 @@ export function PrayerWillPrayCard({
   prayer,
   handlePrayerRequestAction,
 }: PrayerWillPrayCardProps) {
-  const [loading, setLoading] = useState(true);
-  const [displayName, setDisplayName] = useState<string>("");
-  const [showMessage, setShowMessage] = useState<boolean>(false);
-  const [peoplePraying, setPeoplePraying] = useState<number | null>(null);
+  const { loading, setLoading } = useUIStore();
+  const { willPrayCard, setWillPrayCard } = useStore();
 
   const item = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  };
+
+  const setShowMessage = (value: boolean) => {
+    setWillPrayCard({ showMessage: value });
   };
 
   useEffect(() => {
@@ -54,7 +58,7 @@ export function PrayerWillPrayCard({
       setLoading(true);
       try {
         const prayerCountResponse = await getPrayerCountById(prayer.id);
-        setPeoplePraying(prayerCountResponse.data.WillPrayCount);
+        setWillPrayCard({ count: prayerCountResponse.data.WillPrayCount });
       } catch (error) {
         console.error("Failed to fetch prayer count", error);
       }
@@ -71,13 +75,13 @@ export function PrayerWillPrayCard({
       try {
         let userResponse = await getUserById(prayer.user_id);
         if (!prayer.is_anonymous) {
-          setDisplayName(userResponse.data.username);
+          setWillPrayCard({ displayName: userResponse.data.username });
         } else {
-          setDisplayName("Anonymous");
+          setWillPrayCard({ displayName: "Anonymous" });
         }
 
         let prayerCountResponse = await getPrayerCountById(prayer.id);
-        setPeoplePraying(prayerCountResponse.data.WillPrayCount);
+        setWillPrayCard({ count: prayerCountResponse.data.WillPrayCount });
       } catch (error) {
         console.error("Failed to fetch user associated with prayer", error);
       }
@@ -141,7 +145,7 @@ export function PrayerWillPrayCard({
                 <Separator className="my-2" />
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  onClick={() => setShowMessage(true)}
+                  onClick={() => setWillPrayCard({ showMessage: true })}
                 >
                   <MessageCircle className="mr-2 h-4 w-4" />
                   Message
@@ -168,7 +172,7 @@ export function PrayerWillPrayCard({
               variant="outline"
               size="sm"
               className="gap-1 cursor-pointer"
-              onClick={() => setShowMessage(true)}
+              onClick={() => setWillPrayCard({ showMessage: true })}
             >
               <MessageCircle className="h-4 w-4" />
               Message
@@ -190,8 +194,8 @@ export function PrayerWillPrayCard({
         </CardFooter>
       </Card>
       <SendMessageDialog
-        displayName={displayName}
-        showMessage={showMessage}
+        displayName={willPrayCard.displayName}
+        showMessage={willPrayCard.showMessage}
         setShowMessage={setShowMessage}
       />
     </motion.div>

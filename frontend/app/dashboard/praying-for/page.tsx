@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { BookOpen, Heart, PlusCircle } from "lucide-react";
+import { Heart, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import VerifiedClerkSession from "@/components/verified-clerk-session";
@@ -11,25 +11,26 @@ import {
   getPrayerResponsesByUser,
   updatePrayerResponse,
 } from "@/services/prayers";
-import { Prayer } from "@/services/types";
 import { PrayerWillPrayCard } from "@/components/prayer-will-pray-card";
 import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
+import { useStore } from "@/store/useStore";
+import { useUIStore } from "@/store/uiStore";
 
 export default function PrayingForPage() {
-  const [prayingFor, setPrayingFor] = useState<Prayer[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const { loading, setLoading } = useUIStore();
+  const { prayingFor, setPrayingFor } = useStore();
 
   useEffect(() => {
     const loadPrayers = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
         const response = await getPrayerResponsesByUser();
         setPrayingFor(response.data);
       } catch (error) {
         console.error("Failed to load prayer responses:", error);
         toast.error("Failed to load your prayer commitments");
       }
-      setIsLoading(false);
+      setLoading(false);
     };
     loadPrayers();
   }, []);
@@ -40,7 +41,7 @@ export default function PrayingForPage() {
   ) => {
     try {
       await updatePrayerResponse(prayerId, status);
-      setPrayingFor((prev) => prev.filter((p) => p.id !== prayerId));
+      setPrayingFor(prayingFor.filter((p) => p.id !== prayerId));
       if (status === "prayed_for") {
         toast.success("Marked as prayed", {
           description: "Thank you for your prayers.",
@@ -73,7 +74,7 @@ export default function PrayingForPage() {
           Prayers I'm Committed To
         </motion.h2>
 
-        {isLoading ? (
+        {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Render 3 skeleton cards while loading */}
             {[...Array(3)].map((_, i) => (

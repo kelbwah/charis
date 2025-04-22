@@ -1,25 +1,24 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Coffee, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import CustomLink from "./custom-link";
+import { useStore } from "@/store/useStore";
 
 interface DonationBannerProps {
   isFixed: boolean;
 }
 
 export default function DonationBanner({ isFixed }: DonationBannerProps) {
-  const [dismissed, setDismissed] = useState(false);
+  const { bannerDismissed, setBannerDismissed } = useStore();
 
-  if (dismissed) {
+  if (bannerDismissed) {
     return null;
   }
 
   const isComingSoon = process.env.FEATURE_COMING_SOON === "true";
 
-  // Small compact banner for fixed position
   if (isFixed) {
     return (
       <motion.div
@@ -72,7 +71,7 @@ export default function DonationBanner({ isFixed }: DonationBannerProps) {
           variant="ghost"
           size="icon"
           className="cursor-pointer absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full text-primary-foreground opacity-80 transition-opacity hover:opacity-100"
-          onClick={() => setDismissed(true)}
+          onClick={() => setBannerDismissed(true)}
         >
           <X className="h-3 w-3" />
           <span className="sr-only">Dismiss</span>
@@ -93,7 +92,7 @@ export default function DonationBanner({ isFixed }: DonationBannerProps) {
         variant="ghost"
         size="icon"
         className="cursor-pointer absolute right-2 top-2 h-8 w-8 rounded-full transition-opacity hover:opacity-100 opacity-70"
-        onClick={() => setDismissed(true)}
+        onClick={() => setBannerDismissed(true)}
       >
         <X className="h-4 w-4" />
         <span className="sr-only">Dismiss</span>

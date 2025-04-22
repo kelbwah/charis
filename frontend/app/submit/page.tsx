@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,17 +25,13 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { createPrayer } from "@/services/prayers";
+import { useStore } from "@/store/useStore";
 
 export default function SubmitPrayerPage() {
   const router = useRouter();
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { submit, setSubmit } = useStore();
 
-  const [prayerTitle, setPrayerTitle] = useState("");
-  const [prayerRequest, setPrayerRequest] = useState("");
-  const [category, setCategory] = useState("");
-  const [relatedScripture, setRelatedScripture] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(false);
   const allCategories = [
     "Health",
     "Family",
@@ -47,15 +43,15 @@ export default function SubmitPrayerPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    setSubmit({ isSubmitting: true });
 
     try {
       await createPrayer({
-        prayer_title: prayerTitle,
-        prayer_request: prayerRequest,
-        category: category,
-        related_scripture: relatedScripture,
-        is_anonymous: isAnonymous,
+        prayer_title: submit.title,
+        prayer_request: submit.request,
+        category: submit.category,
+        related_scripture: submit.scripture,
+        is_anonymous: submit.anonymous,
       });
       toast.success("Prayer request submitted", {
         description: "Your prayer request has been shared with the community.",
@@ -65,7 +61,7 @@ export default function SubmitPrayerPage() {
       console.error("Error submitting prayer:", error);
       toast.error("Failed to submit prayer request");
     } finally {
-      setIsSubmitting(false);
+      setSubmit({ isSubmitting: false });
     }
   };
 
@@ -93,8 +89,8 @@ export default function SubmitPrayerPage() {
                   <Input
                     id="prayer-title"
                     placeholder="Brief title for your prayer request"
-                    value={prayerTitle}
-                    onChange={(e) => setPrayerTitle(e.target.value)}
+                    value={submit.title}
+                    onChange={(e) => setSubmit({ title: e.target.value })}
                     required
                   />
                 </div>
@@ -104,8 +100,8 @@ export default function SubmitPrayerPage() {
                     id="prayer-request"
                     placeholder="Share your prayer need in detail..."
                     className="min-h-[150px]"
-                    value={prayerRequest}
-                    onChange={(e) => setPrayerRequest(e.target.value)}
+                    value={submit.request}
+                    onChange={(e) => setSubmit({ request: e.target.value })}
                     required
                   />
                 </div>
@@ -113,7 +109,7 @@ export default function SubmitPrayerPage() {
                   <Label htmlFor="prayer-category">Category</Label>
                   <Select
                     required
-                    onValueChange={(value) => setCategory(value)}
+                    onValueChange={(value) => setSubmit({ category: value })}
                   >
                     <SelectTrigger
                       id="prayer-category"
@@ -141,8 +137,8 @@ export default function SubmitPrayerPage() {
                   <Input
                     id="prayer-scripture"
                     placeholder="Add a Bible verse if relevant"
-                    value={relatedScripture}
-                    onChange={(e) => setRelatedScripture(e.target.value)}
+                    value={submit.scripture}
+                    onChange={(e) => setSubmit({ scripture: e.target.value })}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -155,8 +151,10 @@ export default function SubmitPrayerPage() {
                   <Switch
                     id="anonymous"
                     className="cursor-pointer"
-                    checked={isAnonymous}
-                    onCheckedChange={setIsAnonymous}
+                    checked={submit.anonymous}
+                    onCheckedChange={() =>
+                      setSubmit({ anonymous: !submit.anonymous })
+                    }
                   />
                 </div>
               </CardContent>
@@ -172,9 +170,11 @@ export default function SubmitPrayerPage() {
                 <Button
                   type="submit"
                   className="cursor-pointer"
-                  disabled={isSubmitting}
+                  disabled={submit.isSubmitting}
                 >
-                  {isSubmitting ? "Submitting..." : "Submit Prayer Request"}
+                  {submit.isSubmitting
+                    ? "Submitting..."
+                    : "Submit Prayer Request"}
                 </Button>
               </CardFooter>
             </form>

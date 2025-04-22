@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   Menu,
@@ -38,6 +37,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import CustomLink from "./custom-link";
+import { useStore } from "@/store/useStore";
 
 interface NavbarProps {
   showLinks: boolean;
@@ -46,7 +46,7 @@ interface NavbarProps {
 
 export default function Navbar(Props: NavbarProps) {
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const { navSheetOpen, setNavSheetOpen } = useStore();
   const { showLinks = true, isComingSoon } = Props;
   const { user } = useUser();
 
@@ -137,7 +137,7 @@ export default function Navbar(Props: NavbarProps) {
                 </SignedOut>
               </div>
 
-              <Sheet open={isOpen} onOpenChange={setIsOpen}>
+              <Sheet open={navSheetOpen} onOpenChange={setNavSheetOpen}>
                 <SheetTrigger asChild className="lg:hidden">
                   <Button
                     variant="outline"
@@ -234,7 +234,7 @@ export default function Navbar(Props: NavbarProps) {
                                   ? "bg-primary/10 text-primary"
                                   : "text-foreground"
                               }`}
-                              onClick={() => setIsOpen(false)}
+                              onClick={() => setNavSheetOpen(false)}
                             >
                               <item.icon className="h-5 w-5" />
                               {item.name}
@@ -259,7 +259,7 @@ export default function Navbar(Props: NavbarProps) {
                                   ? "bg-primary/10 text-primary"
                                   : "text-foreground"
                               }`}
-                              onClick={() => setIsOpen(false)}
+                              onClick={() => setNavSheetOpen(false)}
                             >
                               <item.icon className="h-5 w-5" />
                               {item.name}
@@ -282,7 +282,7 @@ export default function Navbar(Props: NavbarProps) {
                               target="_blank"
                               rel="noopener noreferrer"
                               className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent text-foreground"
-                              onClick={() => setIsOpen(false)}
+                              onClick={() => setNavSheetOpen(false)}
                             >
                               <User className="h-5 w-5" />
                               View Profile

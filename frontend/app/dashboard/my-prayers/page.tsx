@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Plus } from "lucide-react";
@@ -9,31 +9,25 @@ import { toast } from "sonner";
 import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { deletePrayer, getAllPrayersByUser } from "@/services/prayers";
 import { PrayerRequestCard } from "@/components/prayer-request-card";
-import { Prayer } from "@/services/types";
 import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
+import { useStore } from "@/store/useStore";
+import { useUIStore } from "@/store/uiStore";
 
 export default function MyPrayersPage() {
-  const [myPrayers, setMyPrayers] = useState<Prayer[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    prayer: Prayer | null;
-  }>({
-    open: false,
-    prayer: null,
-  });
+  const { loading, setLoading } = useUIStore();
+  const { myPrayers, deleteDialog, setMyPrayers, setDeleteDialog } = useStore();
 
   useEffect(() => {
     const loadMyPrayers = async () => {
       try {
-        setIsLoading(true);
+        setLoading(true);
         const response = await getAllPrayersByUser();
         setMyPrayers(response.data);
       } catch (error) {
         console.error("Failed to fetch your prayers:", error);
         toast.error("Failed to load your prayers");
       }
-      setIsLoading(false);
+      setLoading(false);
     };
     loadMyPrayers();
   }, [setMyPrayers]);
@@ -83,7 +77,7 @@ export default function MyPrayersPage() {
             </Button>
           </motion.div>
         </div>
-        {isLoading ? (
+        {loading ? (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* Show multiple skeletons if loading */}
             {[...Array(4)].map((_, i) => (
@@ -103,7 +97,6 @@ export default function MyPrayersPage() {
                   key={prayer.id || index}
                   handleDelete={handleDelete}
                   prayer={prayer}
-                  setDeleteDialog={setDeleteDialog}
                 />
               ))}
             </AnimatePresence>

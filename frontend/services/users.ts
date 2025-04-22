@@ -1,16 +1,16 @@
 import api from "./api";
 import { User } from "./types";
 import { AxiosResponse } from "axios";
-import { serviceTokenHeader } from "./api";
+import { generateAuthHeaders } from "./api";
 
 export const getUserById = (id: string): Promise<AxiosResponse<User>> => {
-  return api.get<User>(`/users/${id}`, serviceTokenHeader());
+  return api.get<User>(`/users/${id}`, generateAuthHeaders());
 };
 
 export const getUserByClerkId = (
   clerkId: string
 ): Promise<AxiosResponse<User>> => {
-  return api.get<User>(`/users/clerk/${clerkId}`, serviceTokenHeader());
+  return api.get<User>(`/users/clerk/${clerkId}`, generateAuthHeaders());
 };
 
 export const getUserByEmail = (email: string): Promise<AxiosResponse<User>> => {

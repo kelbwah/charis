@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,9 +12,10 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Heart, Coffee, Gift, Star } from "lucide-react";
+import { useStore } from "@/store/useStore";
 
 export default function DonatePage() {
-  const [selectedAmount, setSelectedAmount] = useState<string | null>(null);
+  const { selectedAmount, setSelectedAmount } = useStore();
 
   const donationAmounts = [
     {
