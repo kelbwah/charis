@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/kelbwah/charis/backend/internal/config"
@@ -15,32 +16,51 @@ import (
 const apiVersion = "/api/v1"
 
 func NewServer(appConfig *config.AppConfig) *echo.Echo {
+	var allowedCORSOrigins []string
+	if appConfig.ProdEnv == false {
+		allowedCORSOrigins = []string{"http://localhost:6969", "http://127.0.0.1:6969"}
+	} else {
+		allowedCORSOrigins = []string{"https://www.charisconnect.com", "https://charisconnect.com"}
+	}
+
+	fmt.Println(appConfig.ProdEnv)
+	fmt.Println(allowedCORSOrigins)
 	ctx := context.Background()
 	e := echo.New()
 	e.Use(echoware.Logger())
 	e.Use(echoware.Recover())
 	e.Use(echoware.CORSWithConfig(echoware.CORSConfig{
-		AllowOrigins: []string{"*"},
-		AllowMethods: []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete},
+		AllowOrigins:     allowedCORSOrigins,
+		AllowMethods:     []string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodPatch},
+		AllowCredentials: true,
 	}))
+	e.File("/swagger/index.html", "cmd/docs/index.html")
+	e.Static("/swagger", "cmd/docs")
 
-	// Public routes
-	InitGlobalBroadcastRoute(e, ctx, appConfig.DB, appConfig.DBQueries, appConfig.RDB)
-	e.GET("/health", routes.GetHealth)
-	e.POST("/api/v1/webhooks/clerk", func(c echo.Context) error {
-		return routes.ClerkWebhookHandler(c, ctx, appConfig.DB, appConfig.DBQueries)
-	})
-	e.POST("/launch-emails", func(c echo.Context) error {
+	/* ----- Unauthenticated Routes ----- */
+	api := e.Group(apiVersion, charisware.ServiceAuth)
+	api.GET("/health", routes.GetHealth)
+	api.POST("/launch-emails", func(c echo.Context) error {
 		return routes.CreateInitialLaunchEmailEntry(c, ctx, appConfig.DB, appConfig.DBQueries)
+	})
+	api.POST("/register", func(c echo.Context) error {
+		return routes.RegisterHandler(c, ctx, appConfig.DB, appConfig.DBQueries)
+	})
+	api.POST("/login", func(c echo.Context) error {
+		return routes.LoginHandler(c, ctx, appConfig.DB, appConfig.DBQueries)
+	})
+	api.POST("/token/refresh", func(c echo.Context) error {
+		return routes.RefreshTokenHandler(c)
 	})
 
 	/* ----- Authenticated Routes ----- */
-	api := e.Group(apiVersion)
-	api.Use(charisware.ServiceAuth)
-	InitUserRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)
-	InitPrayerRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)
-	InitPrayerResponsesRoutes(api, ctx, appConfig.DB, appConfig.DBQueries)
-	InitPrayerCommentsRoutes(e, api, ctx, appConfig.DB, appConfig.DBQueries, appConfig.RDB)
+	authAPI := api.Group("", charisware.UserAuth)
+	InitGlobalBroadcastRoute(authAPI, ctx, appConfig.DB, appConfig.DBQueries, appConfig.RDB)
+	InitUserRoutes(authAPI, ctx, appConfig.DB, appConfig.DBQueries)
+	InitPrayerRoutes(authAPI, ctx, appConfig.DB, appConfig.DBQueries)
+	InitPrayerResponsesRoutes(authAPI, ctx, appConfig.DB, appConfig.DBQueries)
+	InitPrayerCommentsRoutes(authAPI, ctx, appConfig.DB, appConfig.DBQueries, appConfig.RDB)
+	authAPI.POST("/logout", routes.LogoutHandler)
 
 	return e
 }

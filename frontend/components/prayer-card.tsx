@@ -34,7 +34,6 @@ import { PrayerCardSkeleton } from "./prayer-card-skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import type { Prayer } from "@/services/types";
-import { getUserById } from "@/services/users";
 import { getPrayerCountById } from "@/services/prayers";
 import { Badge } from "./ui/badge";
 import { useStore } from "@/store/useStore";
@@ -74,8 +73,7 @@ export default function PrayerCard({
       setLoading(true);
       if (!prayer) return;
       try {
-        const { data: userData } = await getUserById(prayer.user_id);
-        setPrayerCard({ user: userData });
+        setPrayerCard({ user: {} });
         const { data: prayerCountData } = await getPrayerCountById(prayer.id);
         setPrayerCard({ count: prayerCountData.WillPrayCount });
       } catch (error) {

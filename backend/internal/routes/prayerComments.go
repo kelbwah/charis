@@ -146,7 +146,6 @@ func CreatePrayerComment(c echo.Context, ctx context.Context, db *sql.DB, dbQuer
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid payload"})
 	}
-	log.Printf("Finished parsing prayer payload: %+v\n", payload)
 
 	prayerIDStr := c.Param("id")
 	if prayerIDStr == "" {
@@ -158,16 +157,11 @@ func CreatePrayerComment(c echo.Context, ctx context.Context, db *sql.DB, dbQuer
 	}
 
 	// Validate the authenticated user.
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
-	log.Printf("Retrieved internal userID: %v\n", internalUserID)
+	internalUserID := uuid.New()
 
 	// Check: Prevent author from sending themselves a comment on a prayer request they made
 	originalPrayerInfo, err := dbQueries.GetPrayerByID(ctx, prayerID)
 	if err != nil {
-		log.Println("Error fetching prayer information:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error fetching original prayer information."})
 	}
 
@@ -179,17 +173,14 @@ func CreatePrayerComment(c echo.Context, ctx context.Context, db *sql.DB, dbQuer
 		Comment:     payload.Comment,
 		IsAnonymous: payload.IsAnonymous,
 	}
-	log.Printf("Created CreatePrayerCommentParams: %+v\n", params)
 
 	if originalPrayerInfo.UserID == internalUserID {
-		log.Println("Error: Prayer author cannot leave comment on their own prayer request.")
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Prayer author canot leave comment on their own prayer request."})
 	}
 
 	// Insert the prayer response.
 	prayerCommentResponse, err := dbQueries.CreatePrayerComment(ctx, params)
 	if err != nil {
-		log.Println("Error creating comment:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error creating comment."})
 	}
 

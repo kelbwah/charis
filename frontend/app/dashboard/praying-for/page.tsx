@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Heart, PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import VerifiedClerkSession from "@/components/verified-clerk-session";
 import {
   getPrayerResponsesByUser,
   updatePrayerResponse,
@@ -63,7 +62,7 @@ export default function PrayingForPage() {
   };
 
   return (
-    <VerifiedClerkSession>
+    <>
       <div className="space-y-6">
         <motion.h2
           className="text-xl font-semibold"
@@ -130,6 +129,6 @@ export default function PrayingForPage() {
           </motion.div>
         )}
       </div>
-    </VerifiedClerkSession>
+    </>
   );
 }

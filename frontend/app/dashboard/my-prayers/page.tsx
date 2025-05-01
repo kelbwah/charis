@@ -6,16 +6,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import { BookOpen, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { deletePrayer, getAllPrayersByUser } from "@/services/prayers";
 import { PrayerRequestCard } from "@/components/prayer-request-card";
 import { PrayerCardSkeleton } from "@/components/prayer-card-skeleton";
 import { useStore } from "@/store/useStore";
 import { useUIStore } from "@/store/uiStore";
+import { useCurrentUser } from "@/lib/auth";
 
 export default function MyPrayersPage() {
   const { loading, setLoading } = useUIStore();
   const { myPrayers, deleteDialog, setMyPrayers, setDeleteDialog } = useStore();
+  const { id, userLoading } = useCurrentUser();
+  console.log(id);
 
   useEffect(() => {
     const loadMyPrayers = async () => {
@@ -51,7 +53,7 @@ export default function MyPrayersPage() {
   };
 
   return (
-    <VerifiedClerkSession>
+    <>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <motion.h2
@@ -131,6 +133,6 @@ export default function MyPrayersPage() {
           </motion.div>
         )}
       </div>
-    </VerifiedClerkSession>
+    </>
   );
 }

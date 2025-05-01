@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,48 +13,6 @@ import (
 	"github.com/kelbwah/charis/backend/internal/database"
 	"github.com/labstack/echo/v4"
 )
-
-// SQL Query references:
-//
-// -- name: CreatePrayer :one
-// INSERT INTO prayers (id, prayer_title, prayer_request, category, related_scripture, is_anonymous, user_id)
-// VALUES ($1, $2, $3, $4, $5, $6, $7)
-// RETURNING *;
-//
-// -- name: GetPrayerByID :one
-// SELECT * FROM prayers
-// WHERE id = $1;
-//
-// -- name: GetPrayersByUser :many
-// SELECT * FROM prayers
-// WHERE user_id = $1
-// ORDER BY created_at DESC;
-//
-// -- name: GetAllPrayers :many
-// SELECT * FROM prayers
-// WHERE user_id != $1
-// ORDER BY created_at DESC;
-//
-// -- name: GetAllPrayersWithFilter :many
-// SELECT * FROM prayers
-// WHERE user_id != $1
-// AND category = $2
-// ORDER BY created_at DESC;
-//
-// -- name: UpdatePrayer :one
-// UPDATE prayers
-// SET prayer_title = COALESCE($2, prayer_title),
-//     prayer_request = COALESCE($3, prayer_request),
-//     category = COALESCE($4, category),
-//     related_scripture = COALESCE($5, related_scripture),
-//     is_anonymous = COALESCE($6, is_anonymous),
-//     updated_at = NOW()
-// WHERE id = $1
-// RETURNING *;
-//
-// -- name: DeletePrayer :exec
-// DELETE FROM prayers
-// WHERE id = $1;
 
 // createPrayerPayload represents the JSON payload for creating a prayer.
 type createPrayerPayload struct {
@@ -77,19 +34,13 @@ type updatePrayerPayload struct {
 
 // CreatePrayer creates a new prayer using the CreatePrayer SQL query.
 func CreatePrayer(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	log.Println("Creating prayer payload!")
 	var payload createPrayerPayload
 	if err := c.Bind(&payload); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid payload"})
 	}
-	log.Printf("Finished prayer payload: %+v\n", payload)
 
 	// Validate the authenticated user.
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
-	log.Printf("Retrieved internal userID: %v\n", internalUserID)
+	internalUserID := uuid.New()
 
 	// Prepare query parameters.
 	params := database.CreatePrayerParams{
@@ -101,25 +52,18 @@ func CreatePrayer(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *da
 		IsAnonymous:      payload.IsAnonymous,
 		UserID:           internalUserID,
 	}
-	log.Printf("Created CreatePrayerParams: %+v\n", params)
 
 	// Insert the prayer.
 	prayer, err := dbQueries.CreatePrayer(ctx, params)
 	if err != nil {
-		log.Println("Error creating prayer:", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error creating prayer"})
 	}
-	log.Println("Created prayer!")
 	return c.JSON(http.StatusCreated, prayer)
 }
 
 // GetPrayerByID retrieves a prayer by its ID using the GetPrayerByID SQL query.
 func GetPrayerByID(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	// Validate the user (even if not used for ownership, we require authentication).
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
+	// authenticate user
 
 	prayerIDStr := c.Param("id")
 	if prayerIDStr == "" {
@@ -139,12 +83,7 @@ func GetPrayerByID(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *d
 
 // GetPrayerCountByID retrieves a prayer count by a specific prayer ID using the GetPrayerByID SQL query.
 func GetPrayerCountByID(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	// Validate the user (even if not used for ownership, we require authentication).
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
-
+	// authenticate user
 	prayerIDStr := c.Param("id")
 	if prayerIDStr == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing prayer ID"})
@@ -163,10 +102,7 @@ func GetPrayerCountByID(c echo.Context, ctx context.Context, db *sql.DB, dbQueri
 
 // GetPrayersByUser retrieves all prayers created by the authenticated user.
 func GetPrayersByUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
+	internalUserID := uuid.New()
 
 	prayers, err := dbQueries.GetPrayersByUser(ctx, internalUserID)
 	if err != nil {
@@ -178,12 +114,8 @@ func GetPrayersByUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries
 // GetAllPrayers returns prayers from other users applying the anonymous, category,
 // sort, and pagination (cursor/limit) filters.
 func GetAllPrayers(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	fmt.Println("here!")
 	// Validate the user.
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
+	internalUserID := uuid.New()
 
 	limit := 20
 	if limitParam := c.QueryParam("limit"); limitParam != "" {
@@ -247,10 +179,7 @@ func GetAllPrayers(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *d
 // UpdatePrayer updates an existing prayer.
 // It verifies that the authenticated user is the owner before updating.
 func UpdatePrayer(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
+	internalUserID := uuid.New()
 
 	prayerIDStr := c.Param("id")
 	if prayerIDStr == "" {
@@ -295,10 +224,8 @@ func UpdatePrayer(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *da
 // DeletePrayer deletes an existing prayer.
 // It verifies that the authenticated user is the owner before deletion.
 func DeletePrayer(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	internalUserID, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
+	// authenticate user
+	internalUserID := uuid.New()
 
 	prayerIDStr := c.Param("id")
 	if prayerIDStr == "" {

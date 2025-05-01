@@ -3,204 +3,106 @@ package routes
 import (
 	"context"
 	"database/sql"
-	"errors"
+	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/kelbwah/charis/backend/internal/database"
+	"github.com/kelbwah/charis/backend/internal/utils"
 	"github.com/labstack/echo/v4"
 )
 
-func CreateUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries, data map[string]interface{}) error {
-	clerkID, ok := data["id"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'id' in payload")
-	}
-
-	username, ok := data["username"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'username' in payload")
-	}
-
-	emails, ok := data["email_addresses"].([]interface{})
-	if !ok || len(emails) == 0 {
-		return errors.New("invalid or missing 'email_addresses' in payload")
-	}
-
-	emailMap, ok := emails[0].(map[string]interface{})
-	if !ok {
-		return errors.New("invalid email format in payload")
-	}
-
-	email, ok := emailMap["email_address"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'email_address' in payload")
-	}
-
-	avatarSrc, ok := data["image_url"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'image_url' in payload")
-	}
-
-	params := database.CreateUserParams{
-		ID:        uuid.New(),
-		ClerkID:   clerkID,
-		Email:     email,
-		AvatarSrc: avatarSrc,
-		Username:  username,
-	}
-
-	_, err := dbQueries.CreateUser(ctx, params)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusCreated, map[string]string{"created": "true"})
+type getUserResponse struct {
+	ID        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	Username  string    `json:"username"`
+	Biography string    `json:"biography"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-func UpdateUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries, data map[string]interface{}) error {
-	clerkID, ok := data["id"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'id' in payload")
-	}
-
-	username, ok := data["username"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'username' in payload")
-	}
-
-	emails, ok := data["email_addresses"].([]interface{})
-	if !ok || len(emails) == 0 {
-		return errors.New("invalid or missing 'email_addresses' in payload")
-	}
-
-	emailMap, ok := emails[0].(map[string]interface{})
-	if !ok {
-		return errors.New("invalid email format in payload")
-	}
-
-	email, ok := emailMap["email_address"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'email_address' in payload")
-	}
-
-	avatarSrc, ok := data["image_url"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'image_url' in payload")
-	}
-
-	params := database.UpdateUserParams{
-		ClerkID:   clerkID,
-		Email:     email,
-		Username:  username,
-		AvatarSrc: avatarSrc,
-	}
-
-	err := dbQueries.UpdateUser(ctx, params)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, map[string]string{"updated": "true"})
+// userResponse is the JSON shape returned for GET /users/me
+type patchUserResponse struct {
+	Updated string `json:"updated"`
 }
 
-func DeleteUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries, data map[string]interface{}) error {
-	clerkID, ok := data["id"].(string)
-	if !ok {
-		return errors.New("invalid or missing 'id' in payload")
-	}
-
-	err := dbQueries.DeleteUserByClerkID(ctx, clerkID)
-	if err != nil {
-		return err
-	}
-
-	return c.JSON(http.StatusOK, map[string]string{"deleted": "true"})
+// updateUserPayload represents the JSON payload for updating a user.
+type updateUserPayload struct {
+	Email     string `json:"email" validate:"email"`
+	Password  string `json:"password" validate:"min=8"`
+	Biography string `json:"biography" validate:"min=3,max=150"`
+	Username  string `json:"username" validate:"alphanum,min=3,max=18"`
 }
 
-func validateUser(c echo.Context, ctx context.Context, dbQueries *database.Queries) (uuid.UUID, error) {
-	userClaims, ok := c.Get("user").(jwt.MapClaims)
+func GetUserSelf(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
+	userIdStr, ok := c.Get("userID").(string)
 	if !ok {
-		return uuid.UUID{}, echo.NewHTTPError(http.StatusUnauthorized, "Invalid token claims")
+		return c.JSON(http.StatusUnauthorized, errorResponse{Error: "invalid session"})
 	}
-	userIDStr, ok := userClaims["sub"].(string)
-	if !ok || userIDStr == "" {
-		return uuid.UUID{}, echo.NewHTTPError(http.StatusUnauthorized, "Invalid user id in token")
-	}
-	user, err := dbQueries.GetUserByClerkID(ctx, userIDStr)
+	userID, err := uuid.Parse(userIdStr)
 	if err != nil {
-		return uuid.UUID{}, echo.NewHTTPError(http.StatusUnauthorized, err.Error())
-	}
-	return user.ID, nil
-}
-
-func GetUserByID(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
-
-	idStr := c.Param("id")
-	if idStr == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing user ID"})
-	}
-	userID, err := uuid.Parse(idStr)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Invalid user ID format"})
+		return c.JSON(http.StatusBadRequest, errorResponse{Error: "Invalid user ID format"})
 	}
 
 	user, err := dbQueries.GetUserByID(ctx, userID)
-	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusNotFound, errorResponse{Error: "user not found"})
+	} else if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResponse{Error: "Internal Server Error. Please try again later."})
 	}
-	return c.JSON(http.StatusOK, user)
+
+	resp := getUserResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Username:  user.Username,
+		Biography: user.Biography,
+		CreatedAt: user.CreatedAt,
+	}
+
+	return c.JSON(http.StatusOK, resp)
 }
 
-func GetUserByClerkID(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+func UpdateUser(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
+	// Bind and validate payload
+	var payload updateUserPayload
+	if err := c.Bind(&payload); err != nil {
+		return c.JSON(http.StatusBadRequest, errorResponse{Error: "Invalid payload"})
+	}
+	if err := utils.Validate.Struct(&payload); err != nil {
+		errs := err.(validator.ValidationErrors)
+		out := make(map[string]string, len(errs))
+		for _, fe := range errs {
+			out[fe.Field()] = fmt.Sprintf("failed on '%s' rule", fe.Tag())
+		}
+		return c.JSON(http.StatusBadRequest, out)
 	}
 
-	clerkID := c.Param("clerk_id")
-	if clerkID == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing clerk ID"})
+	// Getting user_id from JWT cookie
+	userIdStr, ok := c.Get("userId").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, errorResponse{Error: "invalid session"})
 	}
-	user, err := dbQueries.GetUserByClerkID(ctx, clerkID)
+	userID, err := uuid.Parse(userIdStr)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
-	}
-	return c.JSON(http.StatusOK, user)
-}
-
-func GetUserByEmail(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
+		return c.JSON(http.StatusBadRequest, errorResponse{Error: "Invalid user ID format"})
 	}
 
-	email := c.Param("email")
-	if email == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "Missing email"})
+	// Updating user
+	params := database.UpdateUserParams{
+		ID:        userID,
+		Email:     payload.Email,
+		Password:  payload.Password,
+		Biography: payload.Biography,
+		Username:  payload.Username,
+	}
+	_, err = dbQueries.UpdateUser(ctx, params)
+	if err == sql.ErrNoRows {
+		return c.JSON(http.StatusNotFound, errorResponse{Error: err.Error()})
+	}
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, errorResponse{Error: err.Error()})
 	}
 
-	user, err := dbQueries.GetUserByEmail(ctx, email)
-	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "User not found"})
-	}
-	return c.JSON(http.StatusOK, user)
-}
-
-func GetUsers(c echo.Context, ctx context.Context, db *sql.DB, dbQueries *database.Queries) error {
-	_, err := validateUser(c, ctx, dbQueries)
-	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": err.Error()})
-	}
-
-	users, err := dbQueries.GetUsers(ctx)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "Error retrieving users"})
-	}
-	return c.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, patchUserResponse{Updated: "true"})
 }

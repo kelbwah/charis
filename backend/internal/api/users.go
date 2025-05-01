@@ -11,22 +11,24 @@ import (
 
 func InitUserRoutes(api *echo.Group, ctx context.Context, db *sql.DB, queries *database.Queries) {
 	getUserRoutes(api, ctx, db, queries)
+	patchUserRoutes(api, ctx, db, queries)
+	// deleteUserRoutes(api, ctx, db, queries)
 }
 
 func getUserRoutes(api *echo.Group, ctx context.Context, db *sql.DB, queries *database.Queries) {
-	api.GET("/users/:id", func(c echo.Context) error {
-		return routes.GetUserByID(c, ctx, db, queries)
-	})
-
-	api.GET("/users/clerk/:clerk_id", func(c echo.Context) error {
-		return routes.GetUserByClerkID(c, ctx, db, queries)
-	})
-
-	api.GET("/users/email/:email", func(c echo.Context) error {
-		return routes.GetUserByEmail(c, ctx, db, queries)
-	})
-
-	api.GET("/users", func(c echo.Context) error {
-		return routes.GetUsers(c, ctx, db, queries)
+	api.GET("/users/me", func(c echo.Context) error {
+		return routes.GetUserSelf(c, ctx, db, queries)
 	})
 }
+
+func patchUserRoutes(api *echo.Group, ctx context.Context, db *sql.DB, queries *database.Queries) {
+	api.PATCH("/users/me", func(c echo.Context) error {
+		return routes.UpdateUser(c, ctx, db, queries)
+	})
+}
+
+// func deleteUserRoutes(api *echo.Group, ctx context.Context, db *sql.DB, queries *database.Queries) {
+// 	api.DELETE("/users/:id", func(c echo.Context) error {
+// 		return routes.DeleteUser(c, ctx, db, queries)
+// 	}, charisware.UserAuth)
+// }

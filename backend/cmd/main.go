@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -25,7 +24,7 @@ func main() {
 
 	// Start it in a goroutine for graceful shutdown
 	go func() {
-		log.Printf("Listening on %s (prod=%s)", appConfig.BindAddr, appConfig.ProdEnv)
+		log.Printf("Listening on %s (prod=%v)", appConfig.BindAddr, appConfig.ProdEnv)
 		if err := e.Start(appConfig.BindAddr); err != nil {
 			log.Fatalf("Server error: %v", err)
 		}

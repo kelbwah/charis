@@ -1,10 +1,10 @@
 -- +goose Up
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY,
-    clerk_id TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL UNIQUE,
-    username TEXT NOT NULL UNIQUE,
-    avatar_src TEXT NOT NULL,
+    password TEXT NOT NULL,
+    username VARCHAR(18) NOT NULL UNIQUE,
+    biography VARCHAR(150) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMP NOT NULL DEFAULT NOW()
 );

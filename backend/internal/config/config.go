@@ -17,7 +17,7 @@ type AppConfig struct {
 	DBQueries    *database.Queries
 	RDB          *redis.Client
 	LocalPort    string // from LOCALHOST_PORT
-	ProdEnv      string // from PROD_ENV ("true" or "false")
+	ProdEnv      bool
 	BindAddr     string // computed host:port
 	PublicAPIURL string // from PUBLIC_API_URL
 	APIBaseURL   string // final URL your clients should hit
@@ -26,7 +26,7 @@ type AppConfig struct {
 func InitConfig() (*AppConfig, error) {
 	// load .env in dev; ignore missing in prod
 	if err := godotenv.Load(); err != nil {
-		log.Printf("⚠️  no .env file found: %v", err)
+		log.Printf("⚠️ no .env file found: %v", err)
 	}
 
 	// 1) Raw env vars
@@ -38,13 +38,13 @@ func InitConfig() (*AppConfig, error) {
 			port = "8080"
 		}
 	}
-	prodEnv := os.Getenv("PROD_ENV") // "true" means production
+	prodEnv := os.Getenv("PROD_ENV") == "true" // "true" means production
 	publicURL := os.Getenv("PUBLIC_API_URL")
 
 	// 2) Compute bind address
 	// Compute bindAddr
 	var bindAddr string
-	if prodEnv == "true" {
+	if prodEnv == true {
 		bindAddr = fmt.Sprintf("0.0.0.0:%s", port)
 	} else {
 		bindAddr = fmt.Sprintf("127.0.0.1:%s", port)
@@ -56,9 +56,9 @@ func InitConfig() (*AppConfig, error) {
 	}
 
 	// 4) Compute APIBaseURL (local vs. public)
-	useLocal := os.Getenv("USE_LOCAL_API") // set to "false" in prod Railway
+	useLocal := os.Getenv("USE_LOCAL_API") == "true" // set to "false" in prod Railway
 	var apiBase string
-	if prodEnv == "true" && useLocal == "false" {
+	if prodEnv == true && useLocal == false {
 		apiBase = publicURL
 	} else {
 		apiBase = fmt.Sprintf("http://%s", bindAddr)

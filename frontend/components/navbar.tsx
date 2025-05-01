@@ -20,14 +20,6 @@ import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import { motion } from "framer-motion";
 import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
-import {
   Sheet,
   SheetClose,
   SheetContent,
@@ -38,6 +30,13 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import CustomLink from "./custom-link";
 import { useStore } from "@/store/useStore";
+import { useCurrentUser } from "@/lib/auth";
+import Link from "next/link";
+import { toast } from "sonner";
+import { logout } from "@/services/auth";
+import { useRouter } from "next/navigation";
+import { UserDropdown } from "./user-dropdown";
+import { useEffect } from "react";
 
 interface NavbarProps {
   showLinks: boolean;
@@ -48,7 +47,12 @@ export default function Navbar(Props: NavbarProps) {
   const pathname = usePathname();
   const { navSheetOpen, setNavSheetOpen } = useStore();
   const { showLinks = true, isComingSoon } = Props;
-  const { user } = useUser();
+  const { id, userLoading, user } = useCurrentUser();
+  const signedIn = user ? true : false; // temporary logic
+  const signedOut = user ? false : true; // temporary logic
+  const router = useRouter();
+
+  console.log(signedIn);
 
   const mainNavigation = [
     { name: "Home", href: "/", icon: Home },
@@ -64,6 +68,18 @@ export default function Navbar(Props: NavbarProps) {
     { name: "Privacy", href: "/privacy", icon: LockKeyhole },
     { name: "Terms", href: "/terms", icon: ScrollText },
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await logout();
+      toast.success("Successfully logged out!");
+      router.push("/auth");
+    } catch (error: any) {
+      toast.error(`Error: ${error.message}`);
+    }
+  };
+
+  useEffect(() => {}, [signedIn, signedOut]);
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-primary/10">
@@ -124,17 +140,19 @@ export default function Navbar(Props: NavbarProps) {
           {!isComingSoon && (
             <>
               <div className="hidden lg:flex items-center">
-                <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
-                </SignedIn>
-                <SignedOut>
-                  <SignInButton mode="redirect">
+                {!signedIn ? (
+                  <CustomLink href="/auth" isComingSoon={isComingSoon}>
                     <Button size="sm" className="cursor-pointer">
                       <LogIn className="mr-2 h-4 w-4" />
                       Sign In
                     </Button>
-                  </SignInButton>
-                </SignedOut>
+                  </CustomLink>
+                ) : (
+                  <UserDropdown
+                    handleLogout={handleSignOut}
+                    username={user ? user.username : ""}
+                  />
+                )}
               </div>
 
               <Sheet open={navSheetOpen} onOpenChange={setNavSheetOpen}>
@@ -148,22 +166,24 @@ export default function Navbar(Props: NavbarProps) {
                     <span className="sr-only">Toggle menu</span>
                   </Button>
                 </SheetTrigger>
+
                 <SheetContent
                   side="right"
                   className="w-[280px] sm:w-[350px] p-0"
                 >
                   <div className="flex flex-col h-full">
-                    {/* User profile section at top */}
-                    <SignedIn>
+                    {/* Top User Section */}
+                    {signedIn ? (
                       <div className="bg-primary/5 p-6">
                         <div className="flex items-start gap-4">
-                          <UserButton />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-base truncate">
-                              {user?.fullName}
+                              {/* user?.fullName */}
+                              full name
                             </p>
                             <p className="text-sm text-muted-foreground truncate">
-                              {user?.primaryEmailAddress?.emailAddress}
+                              {/* user?.primaryEmailAddress?.emailAddress */}
+                              email address
                             </p>
                             <div className="mt-2">
                               <Badge
@@ -176,9 +196,7 @@ export default function Navbar(Props: NavbarProps) {
                           </div>
                         </div>
                       </div>
-                    </SignedIn>
-
-                    <SignedOut>
+                    ) : (
                       <div className="bg-primary/5 p-6 flex flex-col items-center justify-center gap-3">
                         <div className="rounded-full bg-primary/10 p-3">
                           <svg
@@ -203,17 +221,18 @@ export default function Navbar(Props: NavbarProps) {
                         <p className="text-center text-sm text-muted-foreground mb-2">
                           Sign in to share prayers and connect with others
                         </p>
-                        <SheetClose asChild className="cursor-pointer">
-                          <SignInButton mode="redirect">
+                        <SheetClose asChild>
+                          <CustomLink href="/auth" isComingSoon={isComingSoon}>
                             <Button className="cursor-pointer w-full">
                               <LogIn className="mr-2 h-4 w-4" />
                               Sign In
                             </Button>
-                          </SignInButton>
+                          </CustomLink>
                         </SheetClose>
                       </div>
-                    </SignedOut>
+                    )}
 
+                    {/* Main Navigation */}
                     <div className="flex-1 overflow-auto">
                       <SheetHeader className="px-6 pt-6 pb-2">
                         <h3 className="text-sm font-medium text-muted-foreground">
@@ -242,7 +261,10 @@ export default function Navbar(Props: NavbarProps) {
                           </SheetClose>
                         ))}
                       </div>
+
                       <Separator className="my-4" />
+
+                      {/* Secondary Navigation */}
                       <div className="px-6 pb-2">
                         <h3 className="text-sm font-medium text-muted-foreground">
                           HELP & SUPPORT
@@ -267,52 +289,53 @@ export default function Navbar(Props: NavbarProps) {
                           </SheetClose>
                         ))}
                       </div>
-                      <SignedIn>
-                        <Separator className="my-4" />
-                        <div className="px-6 pb-2">
-                          <h3 className="text-sm font-medium text-muted-foreground">
-                            PROFILE
-                          </h3>
-                        </div>
-                        <div className="px-3 pb-4">
-                          <SheetClose asChild>
-                            <CustomLink
-                              isComingSoon={isComingSoon}
-                              href="https://mighty-guppy-8.accounts.dev/user"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent text-foreground"
-                              onClick={() => setNavSheetOpen(false)}
-                            >
-                              <User className="h-5 w-5" />
-                              View Profile
-                            </CustomLink>
-                          </SheetClose>
-                        </div>
-                      </SignedIn>
+
+                      {/* Profile Section */}
+                      {signedIn && (
+                        <>
+                          <Separator className="my-4" />
+                          <div className="px-6 pb-2">
+                            <h3 className="text-sm font-medium text-muted-foreground">
+                              PROFILE
+                            </h3>
+                          </div>
+                          <div className="px-3 pb-4">
+                            <SheetClose asChild>
+                              <Link
+                                href="/profile"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent text-foreground"
+                                onClick={() => setNavSheetOpen(false)}
+                              >
+                                <User className="h-5 w-5" />
+                                View Profile
+                              </Link>
+                            </SheetClose>
+                          </div>
+                        </>
+                      )}
                     </div>
 
-                    <SignedIn>
+                    {/* Footer */}
+                    {signedIn ? (
                       <div className="p-6 border-t">
                         <SheetClose asChild>
-                          <SignOutButton>
-                            <Button
-                              variant="outline"
-                              className="w-full justify-start cursor-pointer"
-                            >
-                              <LogOut className="mr-2 h-4 w-4" />
-                              Sign Out
-                            </Button>
-                          </SignOutButton>
+                          <Button
+                            onClick={async () => await handleSignOut()}
+                            variant="outline"
+                            className="w-full justify-start cursor-pointer"
+                          >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Sign Out
+                          </Button>
                         </SheetClose>
                       </div>
-                    </SignedIn>
-
-                    <SignedOut>
+                    ) : (
                       <div className="p-6 text-center text-sm text-muted-foreground border-t">
                         <p>© 2025 Charis. All rights reserved.</p>
                       </div>
-                    </SignedOut>
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>

@@ -5,7 +5,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 # --- Make targets ---
-.PHONY: db-up db-down
+.PHONY: db-up db-down swagger-init
 
 live-dev:
 	@air
@@ -21,3 +21,9 @@ db-up:
 
 db-down:
 	@cd internal/sql/schema && goose postgres $(DATABASE_URL) down
+
+swagger-init:
+	@swag init \
+  --generalInfo ./cmd/main.go \
+  --output    ./cmd/docs \
+  --parseInternal

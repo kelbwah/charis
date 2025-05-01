@@ -52,10 +52,10 @@ type PrayerResponse struct {
 
 type User struct {
 	ID        uuid.UUID
-	ClerkID   string
 	Email     string
+	Password  string
 	Username  string
-	AvatarSrc string
+	Biography string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }

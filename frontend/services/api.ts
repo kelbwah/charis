@@ -3,21 +3,24 @@ import { Prayer } from "./types";
 
 const api: AxiosInstance = axios.create({
   baseURL: "/api",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-const serviceToken = process.env.SERVICE_API_TOKEN;
+export const defaultHeaders = {
+  "Content-Type": "application/json",
+};
 
-export const generateAuthHeaders = (jwtAuthToken: string) => {
+export function generateHeaders() {
   return {
     headers: {
-      "X-Service-Token": serviceToken,
-      Authorization: `Bearer ${jwtAuthToken}`,
+      "Content-Type": "application/json",
+      "X-Service-Token": process.env.SERVICE_API_TOKEN,
     },
   };
-};
+}
 
 export function normalizePrayer(apiPrayer: any): Prayer {
   return {

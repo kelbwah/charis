@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
 import PrayerCard from "@/components/prayer-card";
-import VerifiedClerkSession from "@/components/verified-clerk-session";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
@@ -181,7 +180,7 @@ export default function DiscoverPage() {
   const currentPrayer = activePrayers[currentIndex];
 
   return (
-    <VerifiedClerkSession>
+    <>
       <div className="flex flex-col min-h-[calc(100vh-var(--navbar-height)-var(--footer-height))]">
         {/* Header */}
         <div className="sticky top-0 z-10 border-b border-primary/10 bg-background/95 backdrop-blur-sm h-16 flex items-center">
@@ -451,6 +450,6 @@ export default function DiscoverPage() {
         </div>
       </div>
       <DonationBanner isFixed={true} />
-    </VerifiedClerkSession>
+    </>
   );
 }
