@@ -12,7 +12,7 @@ import { createInitialLaunchEmailsEntry } from "@/services/initial-launch-emails
 
 export default function ComingSoonPage() {
   const [targetDate] = useState(() => {
-    const baseDate = new Date("2025-04-18");
+    const baseDate = new Date("2025-05-01");
     const twoWeeksLater = new Date(baseDate);
     twoWeeksLater.setDate(baseDate.getDate() + 14);
     return twoWeeksLater;
